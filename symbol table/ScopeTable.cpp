@@ -11,6 +11,8 @@ static unsigned int SDBMHash(string str) {
     return hash;
 }
 
+int ScopeTable::counter = 0;
+
 ScopeTable::ScopeTable(int n) {
     this->num_buckets = n;
     this->id = ++counter;
@@ -81,6 +83,7 @@ void ScopeTable::Print() {
             cout << "\n";
         }
     }
+    cout << "\n";
 }
 
 ScopeTable::~ScopeTable() {
