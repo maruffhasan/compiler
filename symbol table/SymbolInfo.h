@@ -9,9 +9,16 @@ struct SymbolInfo {
     string type;
     SymbolInfo* next;
 
+    string* extra_types;
+    string* extra_names;
+    int extra_count;
+
     SymbolInfo();
     SymbolInfo(string name, string type);
     SymbolInfo(string name, string type, SymbolInfo* next);
+    void set_extra (string* names, string* types, int count);
+    string toString();
+    ~SymbolInfo();
 };
 
 #endif

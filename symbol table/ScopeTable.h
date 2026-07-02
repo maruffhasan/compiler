@@ -20,7 +20,8 @@ struct ScopeTable {
     bool Insert(SymbolInfo* si);
     SymbolInfo* LookUp(string name);
     bool Delete(string name);
-    void Print();
+    void Print(int round = 1);
+    bool HasParent();
     
     ~ScopeTable();
 

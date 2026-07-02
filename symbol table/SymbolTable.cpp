@@ -7,22 +7,33 @@ SymbolTable::SymbolTable(int n) {
     EnterScope();
 }
 
+SymbolTable::~SymbolTable() {
+    while (current) {
+        ScopeTable* tmp = current->parent_scope;
+        delete current;
+        current = tmp;
+    }
+}
+
 void SymbolTable::EnterScope() {
     ScopeTable* newScope = new ScopeTable(num_buckets);
     newScope->parent_scope = this->current;
     this->current = newScope;
+    cout << "\tScopeTable# " << this->current->id << " created\n";
 }
 
 void SymbolTable::ExitScope() {
     if (!current) {
-        cout << "No scope to exit\n";
+        cout << "\tNo scope to exit\n";
         return;
     }
     if (!current->parent_scope) {
-        cout << "Cannot remove root ScopeTable\n";
+        cout << "\tCannot remove root ScopeTable\n";
         return;
     }
     ScopeTable* tmp = current->parent_scope;
+    cout << "\tScopeTable# " << current->id << " removed\n";
+
     delete current;
     current = tmp;
 }
@@ -44,6 +55,7 @@ SymbolInfo* SymbolTable::LookUp(string name) {
         if (found) return found;
         scope = scope->parent_scope;
     }
+    cout << "\t\'" << name << "\'" << " not found in any of the ScopeTables\n";
     return nullptr;
 }
 
@@ -55,16 +67,10 @@ void SymbolTable::PrintCurrentScope() {
 
 void SymbolTable::PrintAllScopes() {
     ScopeTable* scope = current;
+    int round = 1;
     while (scope) {
-        scope->Print();
+        scope->Print(round);
         scope = scope->parent_scope;
-    }
-}
-
-SymbolTable::~SymbolTable() {
-    while (current) {
-        ScopeTable* tmp = current->parent_scope;
-        delete current;
-        current = tmp;
+        round++;
     }
 }

@@ -10,6 +10,7 @@ struct SymbolTable {
     ScopeTable* current;
     int num_buckets;
 
+    SymbolTable();
     SymbolTable(int n);
 
     void EnterScope();
