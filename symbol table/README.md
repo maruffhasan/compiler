@@ -105,18 +105,6 @@ Manages the stack of `ScopeTable`s.
 
 ---
 
-## Submission Instructions
-
-1. Create a folder named with your **7-digit Student ID**
-2. Name each file: `<StudentID>_<filename>` (e.g., `2205070_symbol_table.cpp`)
-3. Optionally include a `<StudentID>_Makefile` or `<StudentID>_build.sh`
-4. Compress the folder as a `.zip` file named after your Student ID
-5. Submit via **Moodle**
-
-> Do **not** include object files or executables in the submission.
-
----
-
 ## Notes
 
 - This is an **ungraded practice assignment**, but subsequent graded assignments build directly on it — correctness matters.
