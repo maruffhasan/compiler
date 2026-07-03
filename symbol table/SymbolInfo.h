@@ -14,8 +14,7 @@ struct SymbolInfo {
     int extra_count;
 
     SymbolInfo();
-    SymbolInfo(string name, string type);
-    SymbolInfo(string name, string type, SymbolInfo* next);
+    SymbolInfo(string name, string type, SymbolInfo* next = nullptr);
     void set_extra (string* names, string* types, int count);
     string toString();
     ~SymbolInfo();

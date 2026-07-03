@@ -6,42 +6,35 @@
 using namespace std;
 
 
-// ---------------- manual tokenizer (no STL containers) ----------------
-// Splits line into up to maxTokens whitespace-separated tokens.
-// Returns actual token count. tokens[] must be pre-allocated array of strings.
-int splitTokens(const string& line, string tokens[], int maxTokens) {
+int split_tokens(const string& line, string tokens[], int maxTokens) {
     int count = 0;
     int i = 0;
-    int len = (int)line.length();
+    int len = line.length();
     while (i < len && count < maxTokens) {
-        while (i < len && isspace((unsigned char)line[i])) i++;
+        while (i < len && line[i] == ' ') i++;
         if (i >= len) break;
         int start = i;
-        while (i < len && !isspace((unsigned char)line[i])) i++;
+        while (i < len && line[i] != ' ') i++;
         tokens[count++] = line.substr(start, i - start);
     }
     return count;
 }
  
 int main(int argc, char* argv[]) {
-    freopen("output.txt", "w", stdout);
+    
 
     if (argc < 2) {
         cerr << "Usage: " << argv[0] << " <input_file> [output_file]\n";
         return 1;
     }
     ifstream in(argv[1]);
-    streambuf* coutBuf = nullptr;
-    ofstream out;
     if (argc >= 3) {
-        out.open(argv[2]);
-        coutBuf = cout.rdbuf();
-        cout.rdbuf(out.rdbuf());
+        freopen(argv[2], "w", stdout);
     }
 
     string firstLine;
     getline(in, firstLine);
-    int num_buckets = atoi(firstLine.c_str());
+    int num_buckets = (int) firstLine[0] - '0';
  
     SymbolTable* symTab = new SymbolTable(num_buckets); // ScopeTable# 1 created
  
@@ -53,13 +46,8 @@ int main(int argc, char* argv[]) {
     bool quit = false;
  
     while (!quit && getline(in, line)) {
-        bool blank = true;
-        for (size_t k = 0; k < line.length(); k++) {
-            if (!isspace((unsigned char)line[k])) { blank = false; break; }
-        }
-        if (blank) continue;
  
-        int tokenCount = splitTokens(line, tokens, MAX_TOKENS);
+        int tokenCount = split_tokens(line, tokens, MAX_TOKENS);
         if (tokenCount == 0) continue;
         string code = tokens[0];
  
@@ -74,12 +62,11 @@ int main(int argc, char* argv[]) {
             continue; // cannot exit root scope; ignore entirely
         }
  
-        // trim trailing whitespace for echo
-        string echoLine = line;
-        while (!echoLine.empty() && isspace((unsigned char)echoLine.back())) echoLine.pop_back();
- 
         cmdNo++;
-        cout << "Cmd " << cmdNo << ": " << echoLine << "\n";
+        cout << "Cmd " << cmdNo << ":";
+        for (int i = 0; i < tokenCount; i++) {
+            cout << " " << tokens[i];
+        } cout << "\n";
  
         if (code == "I") {
             if (tokenCount < 3) {
@@ -162,9 +149,5 @@ int main(int argc, char* argv[]) {
  
     delete symTab;
     in.close();
-    if (coutBuf) {
-        cout.rdbuf(coutBuf);
-        out.close();
-    }
     return 0;
 }

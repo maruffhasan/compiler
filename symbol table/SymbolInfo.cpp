@@ -1,27 +1,18 @@
 #include "SymbolInfo.h"
 
-SymbolInfo::SymbolInfo(string name, string type) {
-    this->name = name;
-    this->type = type;
-    this->next = nullptr;
-    this->extra_types = nullptr;
-    this->extra_names = nullptr;
-    this->extra_count = 0;
-}
-
 SymbolInfo::SymbolInfo(string name, string type, SymbolInfo* next) {
     this->name = name;
     this->type = type;
     this->next = next;
-    this->extra_types = nullptr;
     this->extra_names = nullptr;
+    this->extra_types = nullptr;
     this->extra_count = 0;
 }
 
 SymbolInfo::~SymbolInfo() {
-    if (extra_types)
+    if (extra_types) 
         delete[] extra_types;
-    if (extra_names)
+    if (extra_names) 
         delete[] extra_names;
 }
 
