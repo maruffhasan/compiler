@@ -34,14 +34,14 @@ ScopeTable::~ScopeTable() {
     delete[] buckets;
 }
 
-bool ScopeTable::Insert(SymbolInfo* si) {
-    unsigned int idx = SDBMHash(si->name, num_buckets);
+bool ScopeTable::Insert(SymbolInfo &si) {
+    unsigned int idx = SDBMHash(si.name, num_buckets);
     SymbolInfo* current = buckets[idx];
     SymbolInfo* prev = nullptr;
     int cnt = 1;
     while (current) {
-        if (current->name == si->name) {
-            cout << "\t\'" << si->name << "\'" << " already exists in the current ScopeTable\n";
+        if (current->name == si.name) {
+            cout << "\t\'" << si.name << "\'" << " already exists in the current ScopeTable\n";
             return false;
         }
         prev = current;
@@ -49,8 +49,8 @@ bool ScopeTable::Insert(SymbolInfo* si) {
         cnt++;
     }
 
-    SymbolInfo* new_si = new SymbolInfo(si->name, si->type, si->next);
-    new_si->set_extra(si->extra_names, si->extra_types, si->extra_count);
+    SymbolInfo* new_si = new SymbolInfo(si.name, si.type, si.next);
+    new_si->set_extra(si.extra_names, si.extra_types, si.extra_count);
 
     if (prev == nullptr) {
         buckets[idx] = new_si;

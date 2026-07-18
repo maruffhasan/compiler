@@ -75,33 +75,29 @@ int main(int argc, char* argv[]) {
             }
             string name = tokens[1];
             string type = tokens[2];
-            SymbolInfo* sym = new SymbolInfo(name, type);
+            SymbolInfo sym = SymbolInfo(name, type);
  
             if (type == "FUNCTION") {
                 int extraCount = tokenCount - 3;
                 if (extraCount > 0) {
-                    string* extraTypes = new string[extraCount];
+                    string extraTypes[extraCount];
                     for (int i = 0; i < extraCount; i++) extraTypes[i] = tokens[3 + i];
-                    sym->set_extra(nullptr, extraTypes, extraCount);
-                    delete[] extraTypes;
+                    sym.set_extra(nullptr, extraTypes, extraCount);
                 }
             } else if (type == "STRUCT" || type == "UNION") {
                 int remaining = tokenCount - 3;
                 int pairCount = remaining / 2;
                 if (pairCount > 0) {
-                    string* types = new string[pairCount];
-                    string* names = new string[pairCount];
+                    string types[pairCount];
+                    string names[pairCount];
                     for (int i = 0; i < pairCount; i++) {
                         types[i] = tokens[3 + 2 * i];
                         names[i] = tokens[3 + 2 * i + 1];
                     }
-                    sym->set_extra(names, types, pairCount);
-                    delete[] types;
-                    delete[] names;
+                    sym.set_extra(names, types, pairCount);
                 }
             }
             bool inserted = symTab->Insert(sym);
-            delete sym;
  
         } else if (code == "L") {
             if (tokenCount != 2) {

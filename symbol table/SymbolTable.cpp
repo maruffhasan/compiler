@@ -38,7 +38,7 @@ void SymbolTable::ExitScope() {
     current = tmp;
 }
 
-bool SymbolTable::Insert(SymbolInfo* si) {
+bool SymbolTable::Insert(SymbolInfo &si) {
     if (!current) return false;
     return current->Insert(si);
 }
