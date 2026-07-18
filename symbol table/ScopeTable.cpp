@@ -12,9 +12,10 @@ static unsigned int SDBMHash(string str, unsigned int num_buckets) {
 
 int ScopeTable::counter = 0;
 
-ScopeTable::ScopeTable(int n) {
+ScopeTable::ScopeTable(int n, ScopeTable* parent_scope) {
     this->num_buckets = n;
     this->id = ++counter;
+    this->parent_scope = parent_scope;
     buckets = new SymbolInfo*[num_buckets];
     for (int i = 0; i < num_buckets; i++) {
         buckets[i] = nullptr;

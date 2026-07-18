@@ -15,7 +15,7 @@ struct ScopeTable {
     SymbolInfo** buckets;
     ScopeTable* parent_scope;
 
-    ScopeTable(int n);
+    ScopeTable(int n, ScopeTable* parent_scope);
 
     bool Insert(SymbolInfo &si);
     SymbolInfo* LookUp(string name);

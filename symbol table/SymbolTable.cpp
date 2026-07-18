@@ -16,8 +16,7 @@ SymbolTable::~SymbolTable() {
 }
 
 void SymbolTable::EnterScope() {
-    ScopeTable* newScope = new ScopeTable(num_buckets);
-    newScope->parent_scope = this->current;
+    ScopeTable* newScope = new ScopeTable(num_buckets, this->current);
     this->current = newScope;
     cout << "\tScopeTable# " << this->current->id << " created\n";
 }
