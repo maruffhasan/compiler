@@ -14,8 +14,14 @@ int ScopeTable::counter = 0;
 
 ScopeTable::ScopeTable(int n, ScopeTable* parent_scope) {
     this->num_buckets = n;
-    this->id = ++counter;
+    this->child = 0;
     this->parent_scope = parent_scope;
+    if (this->parent_scope) {
+        this->parent_scope->child++;
+        this->id = this->parent_scope->id + "." + to_string(this->parent_scope->child);
+    } else {
+        this->id = to_string(++counter);
+    }
     buckets = new SymbolInfo*[num_buckets];
     for (int i = 0; i < num_buckets; i++) {
         buckets[i] = nullptr;

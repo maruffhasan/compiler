@@ -9,7 +9,8 @@ using namespace std;
 
 
 struct ScopeTable {
-    int id;
+    string id;
+    int child;
     static int counter;
     int num_buckets;
     SymbolInfo** buckets;

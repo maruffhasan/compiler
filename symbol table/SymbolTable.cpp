@@ -98,7 +98,7 @@ void SymbolTable::PrintAllScopes() {
 void SymbolTable::Quit() {
     while (current) {
         bool hasParent = current->HasParent();
-        int rootId = current->id;
+        string rootId = current->id;
         if (!hasParent) {
             // manually report removal of the root scope, then delete it
             cout << "\tScopeTable# " << rootId << " removed\n";
