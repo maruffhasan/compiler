@@ -35,15 +35,14 @@ ScopeTable::~ScopeTable() {
     delete[] buckets;
 }
 
-bool ScopeTable::Insert(SymbolInfo &si) {
+SymbolInfo* ScopeTable::Insert(SymbolInfo &si) {
     unsigned int idx = SDBMHash(si.name, num_buckets);
     SymbolInfo* current = buckets[idx];
     SymbolInfo* prev = nullptr;
     int cnt = 1;
     while (current) {
         if (current->name == si.name) {
-            cout << "\t\'" << si.name << "\'" << " already exists in the current ScopeTable\n";
-            return false;
+            return nullptr;
         }
         prev = current;
         current = current->next;
@@ -52,6 +51,8 @@ bool ScopeTable::Insert(SymbolInfo &si) {
 
     SymbolInfo* new_si = new SymbolInfo(si.name, si.type, si.next);
     new_si->set_extra(si.extra_names, si.extra_types, si.extra_count);
+    new_si->bucket = idx + 1;
+    new_si->bucket_pos = cnt;
 
     if (prev == nullptr) {
         buckets[idx] = new_si;
@@ -59,22 +60,17 @@ bool ScopeTable::Insert(SymbolInfo &si) {
         prev->next = new_si;
     }
 
-    cout << "\tInserted in ScopeTable# " << id << " at position " << idx + 1<< ", " << cnt << "\n";
-
-    return true;
+    return new_si;
 }
 
 
 SymbolInfo* ScopeTable::LookUp(string name) {
     unsigned int idx = SDBMHash(name, num_buckets);
     SymbolInfo* current = buckets[idx];
-    int cnt = 1;
     while(current) {
         if (current->name == name) {
-            cout << "\t\'" << name << "\'" << " found in ScopeTable# " << id << " at position " << idx + 1 << ", " << cnt << "\n";
             return current;
         }
-        cnt++;
         current = current->next;
     }
     return nullptr;
@@ -92,7 +88,6 @@ bool ScopeTable::Delete(string name) {
             } else {
                 buckets[idx] = current->next;
             }
-            cout << "\tDeleted \'" << name << "\'" << " from ScopeTable# " << id << " at position " << idx + 1 << ", " << cnt << "\n";
             delete current;
             return true;
         }
@@ -100,7 +95,6 @@ bool ScopeTable::Delete(string name) {
         cnt++;
         current = current->next;
     }
-    cout << "\tNot found in the current ScopeTable\n";
     return false;
 }
 

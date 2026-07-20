@@ -9,6 +9,9 @@ struct SymbolInfo {
     string type;
     SymbolInfo* next;
 
+    int bucket;
+    int bucket_pos;
+
     string* extra_types;
     string* extra_names;
     int extra_count;

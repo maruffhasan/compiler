@@ -17,7 +17,7 @@ struct ScopeTable {
 
     ScopeTable(int n, ScopeTable* parent_scope);
 
-    bool Insert(SymbolInfo &si);
+    SymbolInfo* Insert(SymbolInfo &si);
     SymbolInfo* LookUp(string name);
     bool Delete(string name);
     void Print(int round = 1);

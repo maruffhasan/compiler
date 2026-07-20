@@ -20,6 +20,7 @@ struct SymbolTable {
     SymbolInfo* LookUp(string name); // Search a symbol in the symbol table. First, search the current scope table. If the symbol is not in the current one, then search its parent scope table and so on.
     void PrintCurrentScope(); // Print the current scope table.
     void PrintAllScopes(); // Print all the scope tables currently in the symbol table.
+    void Quit();
 
     ~SymbolTable();
 

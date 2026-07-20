@@ -43,9 +43,8 @@ int main(int argc, char* argv[]) {
  
     string line;
     int cmdNo = 0;
-    bool quit = false;
  
-    while (!quit && getline(in, line)) {
+    while (getline(in, line)) {
  
         int tokenCount = split_tokens(line, tokens, MAX_TOKENS);
         if (tokenCount == 0) continue;
@@ -114,11 +113,8 @@ int main(int argc, char* argv[]) {
             symTab->Remove(tokens[1]);
  
         } else if (code == "P") {
-            if (tokens[1] == "C") {
-                symTab->PrintCurrentScope();
-            } else {
-                symTab->PrintAllScopes();
-            }
+            if (tokens[1] == "C") symTab->PrintCurrentScope();
+            else symTab->PrintAllScopes();
  
         } else if (code == "S") {
             symTab->EnterScope();
@@ -127,19 +123,8 @@ int main(int argc, char* argv[]) {
             symTab->ExitScope();
  
         } else if (code == "Q") {
-            while (symTab->current) {
-                bool hadParent = symTab->current->HasParent();
-                int rootId = symTab->current->id;
-                if (!hadParent) {
-                    // manually report removal of the root scope, then delete it
-                    cout << "\tScopeTable# " << rootId << " removed\n";
-                    delete symTab->current;
-                    symTab->current = nullptr;
-                    break;
-                }
-                symTab->ExitScope();
-            }
-            quit = true;
+            symTab->Quit();
+            break;
         }
     }
  
