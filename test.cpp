@@ -34,7 +34,7 @@ int main(int argc, char* argv[]) {
 
     string firstLine;
     getline(in, firstLine);
-    int num_buckets = (int) firstLine[0] - '0';
+    int num_buckets = stoi(firstLine);
  
     SymbolTable* symTab = new SymbolTable(num_buckets); // ScopeTable# 1 created
  

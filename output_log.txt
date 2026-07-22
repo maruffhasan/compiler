@@ -1,0 +1,14 @@
+	ScopeTable# 1 created
+Line no 1: Token <INT> Lexeme int found
+
+	ScopeTable# 1
+	1--> 
+	2--> 
+	3--> 
+	4--> 
+	5--> 
+	6--> 
+	7--> 
+	ScopeTable# 1 removed
+Total lines: 0
+Total errors: 0
