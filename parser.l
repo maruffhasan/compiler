@@ -12,8 +12,6 @@
 #include <string>
 
 #include "SymbolTable.h"
-#include "SymbolInfo.h"
-#include "ScopeTable.h"
 
 using namespace std;
 
@@ -32,8 +30,7 @@ string ans_char_plain;
 
 string comment;
 
-string CAP(string s)
-{
+string CAP(string s) {
     for(auto &ch : s) ch = toupper(ch);
     return s;
 }
@@ -73,6 +70,10 @@ if|else|goto|for|while|long|do|break|short|int|char|static|float|double|unsigned
 {DIGIT}+(\.{DIGIT}+)?([Ee][+-]?{DIGIT}+)? {
     tokenout << "<CONST_FLOAT, " << yytext << "> ";
     logout << "Line no " << line_count << ": Token <CONST_FLOAT> Lexeme " << yytext << " found\n" << endl;
+    SymbolInfo si(yytext, "CONST_FLOAT");
+    if(sym_tab.Insert(si)) {
+        sym_tab.PrintAllScopes();
+    }
 }
 
 {DIGIT}*(\.{DIGIT}+)\.[0-9\.Ee+-]*(\.)* {
@@ -237,7 +238,6 @@ if|else|goto|for|while|long|do|break|short|int|char|static|float|double|unsigned
         tokenout << "<CONST_CHAR, " << ans_char << "> ";
         logout << "Line no " << line_count << ": Token <CONST_CHAR> Lexeme " << for_print << " found --> <CONST_CHAR, " << ans_char << ">\n" << endl;
         
-        // Pass `for_print` (e.g. "'p'") so it gets formatted correctly as < 'p' : CONST_CHAR >
         SymbolInfo si(for_print, "CONST_CHAR");
         if(sym_tab.Insert(si)) {
             sym_tab.PrintAllScopes();
