@@ -81,7 +81,7 @@ if|else|goto|for|while|long|do|break|short|int|char|static|float|double|unsigned
     logout << "Error at line no " << line_count << ": Too many decimal points " << yytext << "\n" << endl;
 }
 
-([0-9]*(\.[0-9]*)?[Ee][+-]?[0-9]*[0-9\.Ee+-]*(\.)*)|([0-9]+\.) {
+({DIGIT}*(\.{DIGIT}*)?[Ee][+-]?{DIGIT}*[{DIGIT}\.Ee+-]*(\.)*)|({DIGIT}+\.) {
     error_count++;
     logout << "Error at line no " << line_count << ": Ill formed number " << yytext << "\n" << endl;
 }
