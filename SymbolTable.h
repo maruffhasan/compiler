@@ -9,9 +9,10 @@ using namespace std;
 struct SymbolTable {
     ScopeTable* current;
     int num_buckets;
+    ofstream &logout;
 
     SymbolTable();
-    SymbolTable(int n);
+    SymbolTable(int n, ofstream &logout);
 
     void EnterScope(); //Create a new scope table and make it the current one. Also, make the previous “current” scope table as its parent_scope table.
     void ExitScope(); // Remove the current scope table.

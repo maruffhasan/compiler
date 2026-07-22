@@ -10,8 +10,6 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <algorithm>
-#include <cctype>
 
 #include "SymbolTable.h"
 #include "SymbolInfo.h"
@@ -40,21 +38,9 @@ string CAP(string s)
     return s;
 }
 
-// SDBM Hash Function as required by specification
-unsigned int sdbmHash(const char *p) 
-{
-    unsigned int hash = 0;
-    auto *str = (unsigned char *) p;
-    int c{};
-    while ((c = *str++))
-    {
-        hash = c + (hash << 6) + (hash << 16) - hash;
-    }
-    return hash;
-}
 
 int bucket_size = 7;
-SymbolTable sym_tab(bucket_size);
+SymbolTable sym_tab(bucket_size, logout);
 
 %}
 
@@ -250,6 +236,12 @@ if|else|goto|for|while|long|do|break|short|int|char|static|float|double|unsigned
     else if((int)ans_char.size() == 1) {
         tokenout << "<CONST_CHAR, " << ans_char << "> ";
         logout << "Line no " << line_count << ": Token <CONST_CHAR> Lexeme " << for_print << " found --> <CONST_CHAR, " << ans_char << ">\n" << endl;
+        
+        // Pass `for_print` (e.g. "'p'") so it gets formatted correctly as < 'p' : CONST_CHAR >
+        SymbolInfo si(for_print, "CONST_CHAR");
+        if(sym_tab.Insert(si)) {
+            sym_tab.PrintAllScopes();
+        }
     }
     else {
         error_count++;
@@ -390,8 +382,8 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-    tokenout.open("2105200_token.txt");
-    logout.open("2105200_log.txt");
+    tokenout.open("out/token.txt");
+    logout.open("out/log.txt");
 
     yyin = fin;
     yylex();

@@ -4,6 +4,8 @@
 #include<iostream>
 #include<string>
 #include"SymbolInfo.h"
+#include <fstream>
+
 
 using namespace std;
 
@@ -21,7 +23,7 @@ struct ScopeTable {
     SymbolInfo* Insert(SymbolInfo &si);
     SymbolInfo* LookUp(string name);
     bool Delete(string name);
-    void Print(int round = 1);
+    void Print(ofstream &logout);
     bool HasParent();
     
     ~ScopeTable();

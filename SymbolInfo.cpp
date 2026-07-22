@@ -31,7 +31,7 @@ void SymbolInfo::set_extra(string* names, string* types, int count) {
 }
 
 string SymbolInfo::toString() {
-    string out = "<" + name + "," + type;
+    string out = "< " + name + " : " + type;
     if (type == "FUNCTION") {
         out += "," + extra_types[0] + "<==(";
         for (int i = 1; i < extra_count; i++) {
@@ -48,7 +48,7 @@ string SymbolInfo::toString() {
         out += "}";
     }
 
-    out += ">";
+    out += " >";
     return out;
 }
 

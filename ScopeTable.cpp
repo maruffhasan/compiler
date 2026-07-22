@@ -1,13 +1,24 @@
 #include "ScopeTable.h"
 
-static unsigned int SDBMHash(string str, unsigned int num_buckets) {
-    unsigned int hash = 0;
-    unsigned int len = str.length();
+// static unsigned int SDBMHash(string str, unsigned int num_buckets) {
+//     unsigned int hash = 0;
+//     unsigned int len = str.length();
 
-    for (unsigned int i = 0; i < len; i++) {
-        hash = ((str[i]) + (hash << 6) + (hash << 16) - hash) % num_buckets;
+//     for (unsigned int i = 0; i < len; i++) {
+//         hash = ((str[i]) + (hash << 6) + (hash << 16) - hash) % num_buckets;
+//     }
+//     return hash;
+// }
+
+
+unsigned int sdbmHash(const char *p, unsigned int num_buckets ) {
+    unsigned int hash = 0;
+    auto *str = (unsigned char *) p;
+    int c{};
+    while ((c = *str++)) {
+        hash = c + (hash << 6) + (hash << 16) - hash;
     }
-    return hash;
+    return hash % num_buckets;
 }
 
 int ScopeTable::counter = 0;
@@ -42,10 +53,10 @@ ScopeTable::~ScopeTable() {
 }
 
 SymbolInfo* ScopeTable::Insert(SymbolInfo &si) {
-    unsigned int idx = SDBMHash(si.name, num_buckets);
+    unsigned int idx = sdbmHash(si.name.c_str(), num_buckets);
     SymbolInfo* current = buckets[idx];
     SymbolInfo* prev = nullptr;
-    int cnt = 1;
+    int cnt = 0;
     while (current) {
         if (current->name == si.name) {
             return nullptr;
@@ -57,7 +68,7 @@ SymbolInfo* ScopeTable::Insert(SymbolInfo &si) {
 
     SymbolInfo* new_si = new SymbolInfo(si.name, si.type, si.next);
     new_si->set_extra(si.extra_names, si.extra_types, si.extra_count);
-    new_si->bucket = idx + 1;
+    new_si->bucket = idx;
     new_si->bucket_pos = cnt;
 
     if (prev == nullptr) {
@@ -71,7 +82,7 @@ SymbolInfo* ScopeTable::Insert(SymbolInfo &si) {
 
 
 SymbolInfo* ScopeTable::LookUp(string name) {
-    unsigned int idx = SDBMHash(name, num_buckets);
+    unsigned int idx = sdbmHash(name.c_str(), num_buckets);
     SymbolInfo* current = buckets[idx];
     while(current) {
         if (current->name == name) {
@@ -83,7 +94,7 @@ SymbolInfo* ScopeTable::LookUp(string name) {
 }
 
 bool ScopeTable::Delete(string name) {
-    unsigned int idx = SDBMHash(name, num_buckets);
+    unsigned int idx = sdbmHash(name.c_str(), num_buckets);
     SymbolInfo* current = buckets[idx];
     SymbolInfo* prev = nullptr;
     int cnt = 1;
@@ -104,18 +115,35 @@ bool ScopeTable::Delete(string name) {
     return false;
 }
 
-void ScopeTable::Print(int round) {
-    for (int i = 0; i < round; i++) cout << "\t";
-    cout << "ScopeTable# " << id << "\n";
+// void ScopeTable::Print(int round) {
+//     for (int i = 0; i < round; i++) cout << "\t";
+//     cout << "ScopeTable# " << id << "\n";
+//     for (int i = 0; i < num_buckets; i++) {
+//         for (int i = 0; i < round; i++) cout << "\t";
+//         cout << i + 1 << "--> ";
+//         SymbolInfo* current = buckets[i];
+//         while (current) {
+//             cout << current->toString() << " ";
+//             current = current->next;
+//         }
+//         cout << "\n";
+//     }
+// }
+
+void ScopeTable::Print(ofstream &logout) {
+    logout << "ScopeTable# " << id << "\n";
     for (int i = 0; i < num_buckets; i++) {
-        for (int i = 0; i < round; i++) cout << "\t";
-        cout << i + 1 << "--> ";
+        
         SymbolInfo* current = buckets[i];
+        if (!current) continue;
+
+        logout << i << " --> ";
         while (current) {
-            cout << current->toString() << " ";
+            if (current->toString() != "")
+                logout << current->toString();
             current = current->next;
         }
-        cout << "\n";
+        logout << "\n";
     }
 }
 
