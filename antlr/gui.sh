@@ -1,0 +1,1 @@
+antlr4-parse -v 4.13.2 Calculator.g4 start -gui <$1
