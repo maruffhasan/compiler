@@ -3,12 +3,8 @@
 SymbolInfo::SymbolInfo(string name, string type, string var_type, SymbolInfo* next) {
     this->name = name;
     this->type = type;
-    this->next = next;
-    this->extra_names = nullptr;
-    this->extra_types = nullptr;
-    this->extra_count = 0;
-    this->array = false;
     this->var_type = var_type;
+    this->next = next;
 }
 
 SymbolInfo::~SymbolInfo() {
