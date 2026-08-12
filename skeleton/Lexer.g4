@@ -18,8 +18,8 @@ lexer grammar Lexer;
                 return;
             }
         }
-        lexLogFile << message << std::endl;
-        lexLogFile.flush();
+        // lexLogFile << message << std::endl;
+        // lexLogFile.flush();
     }
 }
 

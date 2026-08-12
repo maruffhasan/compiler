@@ -6,6 +6,7 @@
 #include "CSubsetParser.h"
 #include "ASTVisitor.h"
 
+
 using namespace antlr4;
 using namespace std;
 
@@ -31,14 +32,16 @@ int main(int argc, const char* argv[]) {
     CommonTokenStream tokens(&lexer);
     CSubsetParser parser(&tokens);
 
+
+    
     CSubsetParser::StartContext* tree = parser.start();
 
     // Traverse AST with custom Visitor
-    ASTVisitor visitor(logFile, errorFile);
+    ASTVisitor visitor(lexLogFile, errorFile);
     visitor.visit(tree);
 
     // Write trailing summaries
-    logFile << "Total Errors: " << visitor.getErrorCount() << "\n";
+    lexLogFile << "Total Errors: " << visitor.getErrorCount() << "\n";
 
     logFile.close();
     errorFile.close();

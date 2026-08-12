@@ -155,6 +155,7 @@ public:
     virtual size_t getRuleIndex() const override;
     Type_specifierContext *type_specifier();
     antlr4::tree::TerminalNode *ID();
+    antlr4::tree::TerminalNode *ADDOP();
     Parameter_listContext *parameter_list();
     antlr4::tree::TerminalNode *COMMA();
 
@@ -221,6 +222,7 @@ public:
     antlr4::tree::TerminalNode *CONST_FLOAT();
     Declaration_listContext *declaration_list();
     antlr4::tree::TerminalNode *COMMA();
+    antlr4::tree::TerminalNode *ADDOP();
 
 
     virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
@@ -354,6 +356,7 @@ public:
     TermContext *term();
     Simple_expressionContext *simple_expression();
     antlr4::tree::TerminalNode *ADDOP();
+    antlr4::tree::TerminalNode *ASSIGNOP();
 
 
     virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;

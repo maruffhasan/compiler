@@ -29,6 +29,10 @@ parameter_list
     | parameter_list COMMA type_specifier
     | type_specifier ID
     | type_specifier
+    | parameter_list COMMA type_specifier ADDOP
+    | parameter_list COMMA type_specifier ADDOP ID
+    | type_specifier ADDOP
+    | type_specifier ADDOP ID
     ;
 
 compound_statement
@@ -50,7 +54,9 @@ declaration_list
     | declaration_list COMMA ID LTHIRD CONST_INT RTHIRD        
     | ID                                                         
     | ID LTHIRD CONST_INT RTHIRD                                 
-    | ID LTHIRD CONST_FLOAT RTHIRD                   
+    | ID LTHIRD CONST_FLOAT RTHIRD  
+
+    | declaration_list ADDOP ID
     ;
 
 statements
@@ -73,6 +79,7 @@ statement
 expression_statement
     : SEMICOLON
     | expression SEMICOLON
+    | expression
     ;
 
 variable
@@ -98,6 +105,7 @@ rel_expression
 simple_expression
     : term
     | simple_expression ADDOP term
+    | simple_expression ADDOP ASSIGNOP
     ;
 
 term
