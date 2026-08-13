@@ -641,17 +641,18 @@ public:
         }
 
         if (op == "%") {
-            if (left.type != "INT" || right.type != "INT") {
-                logError(line, "Non-Integer operand on modulus operator");
-                return ExprAttr{ .valid = false };
-            }
-            if (ctx->unary_expression()->getText() == "0") {
-                logError(line, "Modulus by Zero");
-                return ExprAttr{ .valid = false };
-            }
             ExprAttr result;
             result.type = "INT";
             result.value = left.value + op + right.value;
+
+            if (left.type != "INT" || right.type != "INT") {
+                logError(line, "Non-Integer operand on modulus operator");
+                result.valid = false;
+            }
+            if (ctx->unary_expression()->getText() == "0") {
+                logError(line, "Modulus by Zero");
+                result.valid = false;
+            }
             log(line, "term", "term MULOP unary_expression", result.value);
             return result;
         }
