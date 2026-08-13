@@ -66,10 +66,12 @@ SymbolInfo* ScopeTable::Insert(SymbolInfo &si) {
         cnt++;
     }
 
-    SymbolInfo* new_si = new SymbolInfo(si.name, si.type, si.next);
+    SymbolInfo* new_si = new SymbolInfo(si.name, si.type, si.var_type, si.next);
     new_si->set_extra(si.extra_names, si.extra_types, si.extra_count);
     new_si->bucket = idx;
     new_si->bucket_pos = cnt;
+    new_si->array = si.array;
+    new_si->var_type = si.var_type;
 
     if (prev == nullptr) {
         buckets[idx] = new_si;

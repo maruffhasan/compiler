@@ -1,5 +1,4 @@
-#ifndef SYMBOLINFO_H
-#define SYMBOLINFO_H
+#pragma once
 
 #include<iostream>
 using namespace std;
@@ -7,20 +6,25 @@ using namespace std;
 struct SymbolInfo {
     string name;
     string type;
-    SymbolInfo* next;
+    string var_type;
+    bool array = false;
 
-    int bucket;
-    int bucket_pos;
+    int bucket = -1;
+    int bucket_pos = -1;
 
-    string* extra_types;
-    string* extra_names;
-    int extra_count;
+    SymbolInfo* next = nullptr;
 
-    SymbolInfo();
-    SymbolInfo(string name, string type, SymbolInfo* next = nullptr);
-    void set_extra (string* names, string* types, int count);
-    string toString();
+
+    string* extra_names = nullptr;
+    string* extra_types = nullptr;
+    int extra_count = 0;
+
+
+    SymbolInfo(string name = "", string type = "", string var_type = "", SymbolInfo* next = nullptr);
     ~SymbolInfo();
-};
 
-#endif
+    void set_extra (string* names, string* types, int count);
+    
+    string toString();
+
+};

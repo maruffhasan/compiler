@@ -1,5 +1,4 @@
-#ifndef SCOPETABLE_H
-#define SCOPETABLE_H
+#pragma once
 
 #include<iostream>
 #include<string>
@@ -11,23 +10,23 @@ using namespace std;
 
 
 struct ScopeTable {
+    int num_buckets;
+    SymbolInfo** buckets;
+
     string id;
     int child;
     static int counter;
-    int num_buckets;
-    SymbolInfo** buckets;
+    
     ScopeTable* parent_scope;
 
     ScopeTable(int n, ScopeTable* parent_scope);
+    ~ScopeTable();
 
     SymbolInfo* Insert(SymbolInfo &si);
     SymbolInfo* LookUp(string name);
     bool Delete(string name);
-    void Print(ofstream &logout);
     bool HasParent();
-    
-    ~ScopeTable();
+
+    void Print(ofstream &logout);
 
 };
-
-#endif
