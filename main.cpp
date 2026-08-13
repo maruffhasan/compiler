@@ -10,7 +10,9 @@
 using namespace antlr4;
 using namespace std;
 
-ofstream lexLogFile("out/log.txt"); // used by Lexer.g4's writeIntoLexLogFile()
+ofstream lexLogFile; 
+ofstream logFile("out/log.txt");
+ofstream errorFile("out/error.txt");
 
 int main(int argc, const char* argv[]) {
     if (argc < 2) {
@@ -24,8 +26,7 @@ int main(int argc, const char* argv[]) {
         return 1;
     }
 
-    ofstream logFile("out/log.txt");
-    ofstream errorFile("out/error.txt");
+
 
     ANTLRInputStream input(inputFile);
     CSubsetLexer lexer(&input);
@@ -33,15 +34,10 @@ int main(int argc, const char* argv[]) {
     CSubsetParser parser(&tokens);
 
 
-    
     CSubsetParser::StartContext* tree = parser.start();
 
-    // Traverse AST with custom Visitor
-    ASTVisitor visitor(lexLogFile, errorFile);
+    ASTVisitor visitor;
     visitor.visit(tree);
-
-    // Write trailing summaries
-    lexLogFile << "Total Errors: " << visitor.getErrorCount() << "\n";
 
     logFile.close();
     errorFile.close();

@@ -11,6 +11,7 @@ lexer grammar Lexer;
 
 @lexer::members {
     void writeIntoLexLogFile(const std::string &message) {
+      /*
         if (!lexLogFile.is_open()) {
             lexLogFile.open("lexLogFile.txt", std::ios::app);
             if (!lexLogFile) {
@@ -18,8 +19,9 @@ lexer grammar Lexer;
                 return;
             }
         }
-        // lexLogFile << message << std::endl;
-        // lexLogFile.flush();
+        lexLogFile << message << std::endl;
+        lexLogFile.flush();
+        */
     }
 }
 
