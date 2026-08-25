@@ -1,188 +1,131 @@
 format ELF executable 3
 entry main
 
+segment readable writeable
+i dd 1 dup (0)
+segment readable writeable
+j dd 1 dup (0)
 
 segment readable executable
 main:
 	PUSH EBP
 	MOV EBP, ESP
 	SUB ESP, 128
-	MOV EAX, [EBP-4]
+	MOV EAX, 1
 	PUSH EAX
-	MOV EAX, 0
+	POP EAX
+	MOV [i], EAX
+	MOV EAX, [i]
+	CALL OUTDEC
+	MOV EAX, 8
+	PUSH EAX
+	MOV EAX, 5
+	POP EBX
+	ADD EAX, EBX
+	PUSH EAX
+	POP EAX
+	MOV [j], EAX
+	MOV EAX, [j]
+	CALL OUTDEC
+	MOV EAX, [j]
+	PUSH EAX
+	MOV EAX, 2
+	POP EBX
+	IMUL EAX, EBX
+	PUSH EAX
+	MOV EAX, [i]
+	POP EBX
+	ADD EAX, EBX
+	PUSH EAX
+	POP EAX
+	MOV [EBP-4], EAX
+	MOV EAX, [EBP-4]
+	CALL OUTDEC
+	MOV EAX, 9
+	PUSH EAX
+	MOV EAX, [EBP-4]
+	POP EBX
+	XOR EDX, EDX
+	IDIV EBX
+	MOV EAX, EDX
+	PUSH EAX
+	POP EAX
+	MOV [EBP-12], EAX
+	MOV EAX, [EBP-12]
+	CALL OUTDEC
+	MOV EAX, [EBP-12]
+	PUSH EAX
+	MOV EAX, [EBP-8]
 	POP EBX
 	CMP EBX, EAX
-	JG L_rel_true_2
+	JLE L_rel_true_0
+	MOV EAX, 0
+	JMP L_rel_end_1
+L_rel_true_0:
+	MOV EAX, 1
+L_rel_end_1:
+	PUSH EAX
+	POP EAX
+	MOV [EBP-16], EAX
+	MOV EAX, [EBP-16]
+	CALL OUTDEC
+	MOV EAX, [i]
+	PUSH EAX
+	MOV EAX, [j]
+	POP EBX
+	CMP EBX, EAX
+	JNE L_rel_true_2
 	MOV EAX, 0
 	JMP L_rel_end_3
 L_rel_true_2:
 	MOV EAX, 1
 L_rel_end_3:
+	PUSH EAX
+	POP EAX
+	MOV [EBP-20], EAX
+	MOV EAX, [EBP-20]
+	CALL OUTDEC
+	MOV EAX, [EBP-16]
 	CMP EAX, 0
 	SETNE AL
 	MOVZX EAX, AL
 	PUSH EAX
-	MOV EAX, [EBP-4]
-	PUSH EAX
-	MOV EAX, 10
-	POP EBX
-	CMP EBX, EAX
-	JL L_rel_true_4
-	MOV EAX, 0
-	JMP L_rel_end_5
-L_rel_true_4:
-	MOV EAX, 1
-L_rel_end_5:
+	MOV EAX, [EBP-20]
 	CMP EAX, 0
 	SETNE AL
 	MOVZX EAX, AL
 	POP EBX
 	OR EAX, EBX
-	CMP EAX, 0
-	JE L_else_0
-	MOV EAX, 100
 	PUSH EAX
 	POP EAX
-	MOV [EBP-4], EAX
-	JMP L_endif_1
-L_else_0:
-	MOV EAX, 200
-	PUSH EAX
-	POP EAX
-	MOV [EBP-4], EAX
-L_endif_1:
-	MOV EAX, [EBP-4]
+	MOV [EBP-24], EAX
+	MOV EAX, [EBP-24]
 	CALL OUTDEC
-	MOV EAX, [EBP-4]
-	PUSH EAX
-	MOV EAX, 20
-	POP EBX
-	CMP EBX, EAX
-	JG L_rel_true_8
-	MOV EAX, 0
-	JMP L_rel_end_9
-L_rel_true_8:
-	MOV EAX, 1
-L_rel_end_9:
+	MOV EAX, [EBP-16]
 	CMP EAX, 0
 	SETNE AL
 	MOVZX EAX, AL
 	PUSH EAX
-	MOV EAX, [EBP-4]
-	PUSH EAX
-	MOV EAX, 30
-	POP EBX
-	CMP EBX, EAX
-	JL L_rel_true_10
-	MOV EAX, 0
-	JMP L_rel_end_11
-L_rel_true_10:
-	MOV EAX, 1
-L_rel_end_11:
+	MOV EAX, [EBP-20]
 	CMP EAX, 0
 	SETNE AL
 	MOVZX EAX, AL
 	POP EBX
 	AND EAX, EBX
-	CMP EAX, 0
-	JE L_else_6
-	MOV EAX, 300
 	PUSH EAX
 	POP EAX
-	MOV [EBP-4], EAX
-	JMP L_endif_7
-L_else_6:
-	MOV EAX, 400
-	PUSH EAX
-	POP EAX
-	MOV [EBP-4], EAX
-L_endif_7:
-	MOV EAX, [EBP-4]
+	MOV [EBP-24], EAX
+	MOV EAX, [EBP-24]
 	CALL OUTDEC
-	MOV EAX, [EBP-4]
-	PUSH EAX
-	MOV EAX, 40
-	POP EBX
-	CMP EBX, EAX
-	JG L_rel_true_14
-	MOV EAX, 0
-	JMP L_rel_end_15
-L_rel_true_14:
-	MOV EAX, 1
-L_rel_end_15:
-	CMP EAX, 0
-	SETNE AL
-	MOVZX EAX, AL
-	PUSH EAX
-	MOV EAX, [EBP-4]
-	PUSH EAX
-	MOV EAX, 50
-	POP EBX
-	CMP EBX, EAX
-	JL L_rel_true_16
-	MOV EAX, 0
-	JMP L_rel_end_17
-L_rel_true_16:
-	MOV EAX, 1
-L_rel_end_17:
-	CMP EAX, 0
-	SETNE AL
-	MOVZX EAX, AL
-	POP EBX
-	AND EAX, EBX
-	CMP EAX, 0
-	SETNE AL
-	MOVZX EAX, AL
-	PUSH EAX
-	MOV EAX, [EBP-4]
-	PUSH EAX
-	MOV EAX, 60
-	POP EBX
-	CMP EBX, EAX
-	JL L_rel_true_18
-	MOV EAX, 0
-	JMP L_rel_end_19
-L_rel_true_18:
-	MOV EAX, 1
-L_rel_end_19:
-	CMP EAX, 0
-	SETNE AL
-	MOVZX EAX, AL
-	PUSH EAX
-	MOV EAX, [EBP-4]
-	PUSH EAX
-	MOV EAX, 70
-	POP EBX
-	CMP EBX, EAX
-	JG L_rel_true_20
-	MOV EAX, 0
-	JMP L_rel_end_21
-L_rel_true_20:
-	MOV EAX, 1
-L_rel_end_21:
-	CMP EAX, 0
-	SETNE AL
-	MOVZX EAX, AL
-	POP EBX
-	AND EAX, EBX
-	CMP EAX, 0
-	SETNE AL
-	MOVZX EAX, AL
-	POP EBX
-	OR EAX, EBX
-	CMP EAX, 0
-	JE L_else_12
-	MOV EAX, 500
+	MOV EAX, [EBP-24]
+	INC dword [EBP-24]
+	MOV EAX, [EBP-24]
+	CALL OUTDEC
+	MOV EAX, [EBP-24]
+	NEG EAX
 	PUSH EAX
 	POP EAX
 	MOV [EBP-4], EAX
-	JMP L_endif_13
-L_else_12:
-	MOV EAX, 600
-	PUSH EAX
-	POP EAX
-	MOV [EBP-4], EAX
-L_endif_13:
 	MOV EAX, [EBP-4]
 	CALL OUTDEC
 	MOV EAX, 0

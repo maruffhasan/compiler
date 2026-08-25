@@ -25,21 +25,7 @@ public:
 
     virtual std::any visitUnit(CSubsetParser::UnitContext *context) = 0;
 
-    virtual std::any visitFuncDeclWithParams(CSubsetParser::FuncDeclWithParamsContext *context) = 0;
-
-    virtual std::any visitFuncDeclNoParams(CSubsetParser::FuncDeclNoParamsContext *context) = 0;
-
-    virtual std::any visitFuncDefWithParams(CSubsetParser::FuncDefWithParamsContext *context) = 0;
-
     virtual std::any visitFuncDefNoParams(CSubsetParser::FuncDefNoParamsContext *context) = 0;
-
-    virtual std::any visitParamListSingleAnon(CSubsetParser::ParamListSingleAnonContext *context) = 0;
-
-    virtual std::any visitParamListMultiAnon(CSubsetParser::ParamListMultiAnonContext *context) = 0;
-
-    virtual std::any visitParamListSingleNamed(CSubsetParser::ParamListSingleNamedContext *context) = 0;
-
-    virtual std::any visitParamListMultiNamed(CSubsetParser::ParamListMultiNamedContext *context) = 0;
 
     virtual std::any visitCompoundStmtBody(CSubsetParser::CompoundStmtBodyContext *context) = 0;
 
@@ -49,15 +35,9 @@ public:
 
     virtual std::any visitTypeInt(CSubsetParser::TypeIntContext *context) = 0;
 
-    virtual std::any visitTypeFloat(CSubsetParser::TypeFloatContext *context) = 0;
-
     virtual std::any visitTypeVoid(CSubsetParser::TypeVoidContext *context) = 0;
 
-    virtual std::any visitDeclListCommaArray(CSubsetParser::DeclListCommaArrayContext *context) = 0;
-
     virtual std::any visitDeclListSingleId(CSubsetParser::DeclListSingleIdContext *context) = 0;
-
-    virtual std::any visitDeclListSingleArray(CSubsetParser::DeclListSingleArrayContext *context) = 0;
 
     virtual std::any visitDeclListCommaId(CSubsetParser::DeclListCommaIdContext *context) = 0;
 
@@ -71,14 +51,6 @@ public:
 
     virtual std::any visitStmtCompound(CSubsetParser::StmtCompoundContext *context) = 0;
 
-    virtual std::any visitStmtFor(CSubsetParser::StmtForContext *context) = 0;
-
-    virtual std::any visitStmtIf(CSubsetParser::StmtIfContext *context) = 0;
-
-    virtual std::any visitStmtIfElse(CSubsetParser::StmtIfElseContext *context) = 0;
-
-    virtual std::any visitStmtWhile(CSubsetParser::StmtWhileContext *context) = 0;
-
     virtual std::any visitStmtPrintln(CSubsetParser::StmtPrintlnContext *context) = 0;
 
     virtual std::any visitStmtReturn(CSubsetParser::StmtReturnContext *context) = 0;
@@ -88,8 +60,6 @@ public:
     virtual std::any visitExprStmtExpr(CSubsetParser::ExprStmtExprContext *context) = 0;
 
     virtual std::any visitVarSimple(CSubsetParser::VarSimpleContext *context) = 0;
-
-    virtual std::any visitVarArray(CSubsetParser::VarArrayContext *context) = 0;
 
     virtual std::any visitExprLogic(CSubsetParser::ExprLogicContext *context) = 0;
 
@@ -119,8 +89,6 @@ public:
 
     virtual std::any visitFactorVar(CSubsetParser::FactorVarContext *context) = 0;
 
-    virtual std::any visitFactorFuncCall(CSubsetParser::FactorFuncCallContext *context) = 0;
-
     virtual std::any visitFactorParen(CSubsetParser::FactorParenContext *context) = 0;
 
     virtual std::any visitFactorConstInt(CSubsetParser::FactorConstIntContext *context) = 0;
@@ -130,12 +98,6 @@ public:
     virtual std::any visitFactorIncop(CSubsetParser::FactorIncopContext *context) = 0;
 
     virtual std::any visitFactorDecop(CSubsetParser::FactorDecopContext *context) = 0;
-
-    virtual std::any visitArgList(CSubsetParser::ArgListContext *context) = 0;
-
-    virtual std::any visitArgsMulti(CSubsetParser::ArgsMultiContext *context) = 0;
-
-    virtual std::any visitArgsSingle(CSubsetParser::ArgsSingleContext *context) = 0;
 
 
 };

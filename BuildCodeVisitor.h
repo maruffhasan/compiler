@@ -3,8 +3,6 @@
 #include <fstream>
 #include <string>
 #include <vector>
-#include <functional>
-#include "antlr4-runtime.h"
 #include "CSubsetBaseVisitor.h"
 #include "SymbolTable.h"
 
@@ -38,7 +36,7 @@ private:
         }
     }
 
-    void handleFuncDefinition(const std::string& funcName, CSubsetParser::Parameter_listContext* paramCtx, CSubsetParser::Compound_statementContext* bodyCtx) {
+    void handleFuncDefinition(const std::string& funcName, CSubsetParser::Compound_statementContext* bodyCtx) {
         isGlobalScope = false;
         currentLocalOffset = -4;
 
@@ -52,34 +50,6 @@ private:
 
         symbolTable->EnterScope();
 
-        if (paramCtx) {
-            int paramOffset = 8;
-            auto currParam = paramCtx;
-            std::vector<std::string> paramNames;
-
-            // Extract parameter names traversing left-recursive tree
-            std::function<void(antlr4::ParserRuleContext*)> collectParams = [&](antlr4::ParserRuleContext* ctx) {
-                if (!ctx) return;
-                for (auto* child : ctx->children) {
-                    if (auto* p = dynamic_cast<CSubsetParser::Parameter_listContext*>(child)) {
-                        collectParams(p);
-                    }
-                }
-                auto terminal = dynamic_cast<antlr4::tree::TerminalNode*>(ctx->children.back());
-                if (ctx->children.size() >= 2 && terminal && terminal->getSymbol()->getType() == CSubsetParser::ID) {
-                    paramNames.push_back(terminal->getText());
-                }
-            };
-            collectParams(currParam);
-
-            for (const auto& name : paramNames) {
-                SymbolInfo si(name, "VAR", "INT");
-                si.isGlobal = false;
-                si.offset = paramOffset;
-                symbolTable->Insert(si);
-                paramOffset += 4;
-            }
-        }
 
         if (bodyCtx) {
             visit(bodyCtx);
@@ -133,11 +103,6 @@ public:
         return 0;
     }
 
-    virtual std::any visitDeclListSingleArray(CSubsetParser::DeclListSingleArrayContext *ctx) override {
-        int size = std::stoi(ctx->CONST_INT()->getText());
-        processVariableDeclaration(ctx->ID()->getText(), true, size);
-        return 0;
-    }
 
     virtual std::any visitDeclListCommaId(CSubsetParser::DeclListCommaIdContext *ctx) override {
         visit(ctx->declaration_list());
@@ -145,22 +110,11 @@ public:
         return 0;
     }
 
-    virtual std::any visitDeclListCommaArray(CSubsetParser::DeclListCommaArrayContext *ctx) override {
-        visit(ctx->declaration_list());
-        int size = std::stoi(ctx->CONST_INT()->getText());
-        processVariableDeclaration(ctx->ID()->getText(), true, size);
-        return 0;
-    }
 
     // --- Function Definitions ---
 
-    virtual std::any visitFuncDefWithParams(CSubsetParser::FuncDefWithParamsContext *ctx) override {
-        handleFuncDefinition(ctx->ID()->getText(), ctx->parameter_list(), ctx->compound_statement());
-        return 0;
-    }
-
     virtual std::any visitFuncDefNoParams(CSubsetParser::FuncDefNoParamsContext *ctx) override {
-        handleFuncDefinition(ctx->ID()->getText(), nullptr, ctx->compound_statement());
+        handleFuncDefinition(ctx->ID()->getText(), ctx->compound_statement());
         return 0;
     }
 
@@ -191,78 +145,6 @@ public:
         return 0;
     }
 
-    virtual std::any visitStmtIf(CSubsetParser::StmtIfContext *ctx) override {
-        std::string endLabel = newLabel("L_endif");
-
-        visit(ctx->expression());
-        emit("CMP EAX, 0");
-        emit("JE " + endLabel);
-
-        visit(ctx->statement());
-        emitLabel(endLabel);
-        return 0;
-    }
-
-    virtual std::any visitStmtIfElse(CSubsetParser::StmtIfElseContext *ctx) override {
-        std::string elseLabel = newLabel("L_else");
-        std::string endLabel = newLabel("L_endif");
-
-        visit(ctx->expression());
-        emit("CMP EAX, 0");
-        emit("JE " + elseLabel);
-
-        visit(ctx->statement(0));
-        emit("JMP " + endLabel);
-
-        emitLabel(elseLabel);
-        visit(ctx->statement(1));
-
-        emitLabel(endLabel);
-        return 0;
-    }
-
-    virtual std::any visitStmtWhile(CSubsetParser::StmtWhileContext *ctx) override {
-        std::string startLabel = newLabel("L_while_start");
-        std::string endLabel = newLabel("L_while_end");
-
-        emitLabel(startLabel);
-        visit(ctx->expression());
-        emit("CMP EAX, 0");
-        emit("JE " + endLabel);
-
-        visit(ctx->statement());
-        emit("JMP " + startLabel);
-
-        emitLabel(endLabel);
-        return 0;
-    }
-
-    virtual std::any visitStmtFor(CSubsetParser::StmtForContext *ctx) override {
-        std::string startLabel = newLabel("L_for_start");
-        std::string endLabel = newLabel("L_for_end");
-
-        if (ctx->expression_statement(0)) {
-            visit(ctx->expression_statement(0));
-        }
-
-        emitLabel(startLabel);
-
-        if (ctx->expression_statement(1)) {
-            visit(ctx->expression_statement(1));
-            emit("CMP EAX, 0");
-            emit("JE " + endLabel);
-        }
-
-        visit(ctx->statement());
-
-        if (ctx->expression()) {
-            visit(ctx->expression());
-        }
-
-        emit("JMP " + startLabel);
-        emitLabel(endLabel);
-        return 0;
-    }
 
     // --- Expressions & Assignments ---
 
@@ -270,73 +152,23 @@ public:
         visit(ctx->logic_expression());
         emit("PUSH EAX");
 
-        if (auto* varSimple = dynamic_cast<CSubsetParser::VarSimpleContext*>(ctx->variable())) {
-            std::string varName = varSimple->ID()->getText();
-            SymbolInfo* sym = symbolTable->LookUp(varName);
+        auto* varSimple = dynamic_cast<CSubsetParser::VarSimpleContext*>(ctx->variable());
+        std::string varName = varSimple->ID()->getText();
+        SymbolInfo* sym = symbolTable->LookUp(varName);
 
-            emit("POP EAX");
-            if (sym) {
-                if (sym->isGlobal) {
-                    emit("MOV [" + sym->name + "], EAX");
-                } else {
-                    emit("MOV [EBP" + (sym->offset >= 0 ? "+" + std::to_string(sym->offset) : std::to_string(sym->offset)) + "], EAX");
-                }
-            }
-        } else if (auto* varArray = dynamic_cast<CSubsetParser::VarArrayContext*>(ctx->variable())) {
-            std::string varName = varArray->ID()->getText();
-            SymbolInfo* sym = symbolTable->LookUp(varName);
-
-            visit(varArray->expression());
-            emit("MOV EDX, EAX");
-            emit("POP EAX");
-
-            if (sym && sym->isGlobal) {
-                emit("MOV [" + sym->name + " + EDX*4], EAX");
-            } else if (sym) {
-                emit("NEG EDX");
-                emit("LEA ECX, [EBP" + std::to_string(sym->offset) + "]");
-                emit("MOV [ECX + EDX*4], EAX");
+        emit("POP EAX");
+        if (sym) {
+            if (sym->isGlobal) {
+                emit("MOV [" + sym->name + "], EAX");
+            } else {
+                emit("MOV [EBP" + (sym->offset >= 0 ? "+" + std::to_string(sym->offset) : std::to_string(sym->offset)) + "], EAX");
             }
         }
+
         return 0;
     }
 
     // --- Arithmetic & Logical Operations ---
-
-    virtual std::any visitSimpleAddOp(CSubsetParser::SimpleAddOpContext *ctx) override {
-        visit(ctx->term());
-        emit("PUSH EAX");
-        visit(ctx->simple_expression());
-        emit("POP EBX");
-
-        std::string op = ctx->ADDOP()->getText();
-        if (op == "+") {
-            emit("ADD EAX, EBX");
-        } else if (op == "-") {
-            emit("SUB EAX, EBX");
-        }
-        return 0;
-    }
-
-    virtual std::any visitTermMulOp(CSubsetParser::TermMulOpContext *ctx) override {
-        visit(ctx->unary_expression());
-        emit("PUSH EAX");
-        visit(ctx->term());
-        emit("POP EBX");
-
-        std::string op = ctx->MULOP()->getText();
-        if (op == "*") {
-            emit("IMUL EAX, EBX");
-        } else if (op == "/") {
-            emit("XOR EDX, EDX");
-            emit("IDIV EBX");
-        } else if (op == "%") {
-            emit("XOR EDX, EDX");
-            emit("IDIV EBX");
-            emit("MOV EAX, EDX");
-        }
-        return 0;
-    }
 
     virtual std::any visitLogicOp(CSubsetParser::LogicOpContext *ctx) override {
         visit(ctx->rel_expression(0)); // LHS in EAX
@@ -386,6 +218,67 @@ public:
         return 0;
     }
 
+    virtual std::any visitSimpleAddOp(CSubsetParser::SimpleAddOpContext *ctx) override {
+        visit(ctx->term());
+        emit("PUSH EAX");
+        visit(ctx->simple_expression());
+        emit("POP EBX");
+
+        std::string op = ctx->ADDOP()->getText();
+        if (op == "+") {
+            emit("ADD EAX, EBX");
+        } else if (op == "-") {
+            emit("SUB EAX, EBX");
+        }
+        return 0;
+    }
+
+    virtual std::any visitTermMulOp(CSubsetParser::TermMulOpContext *ctx) override {
+        visit(ctx->unary_expression());
+        emit("PUSH EAX");
+        visit(ctx->term());
+        emit("POP EBX");
+
+        std::string op = ctx->MULOP()->getText();
+        if (op == "*") {
+            emit("IMUL EAX, EBX");
+        } else if (op == "/") {
+            emit("XOR EDX, EDX");
+            emit("IDIV EBX");
+        } else if (op == "%") {
+            emit("XOR EDX, EDX");
+            emit("IDIV EBX");
+            emit("MOV EAX, EDX");
+        }
+        return 0;
+    }
+
+    // --- Unary Expressions ---
+
+    virtual std::any visitUnaryAddOp(CSubsetParser::UnaryAddOpContext *ctx) override {
+        visit(ctx->unary_expression()); // Result of inner expression is evaluated into EAX
+
+        std::string op = ctx->ADDOP()->getText();
+        if (op == "-") {
+            emit("NEG EAX"); // Two's complement negation (EAX = -EAX)
+        }
+        // If op == "+", no action is needed as standard value is already in EAX
+        
+        return 0;
+    }
+
+    virtual std::any visitUnaryNot(CSubsetParser::UnaryNotContext *ctx) override {
+        visit(ctx->unary_expression()); // Result evaluated into EAX
+
+        // Logical NOT: If EAX is 0, set EAX to 1. If EAX is non-zero, set EAX to 0.
+        emit("CMP EAX, 0");
+        emit("SETE AL");      // AL = 1 if EAX == 0, else 0
+        emit("MOVZX EAX, AL"); // Zero-extend AL back into 32-bit EAX
+
+        return 0;
+    }
+
+
     // --- Factors ---
 
     virtual std::any visitFactorConstInt(CSubsetParser::FactorConstIntContext *ctx) override {
@@ -394,28 +287,15 @@ public:
     }
 
     virtual std::any visitFactorVar(CSubsetParser::FactorVarContext *ctx) override {
-        if (auto* varSimple = dynamic_cast<CSubsetParser::VarSimpleContext*>(ctx->variable())) {
-            std::string varName = varSimple->ID()->getText();
-            SymbolInfo* sym = symbolTable->LookUp(varName);
+        auto* varSimple = dynamic_cast<CSubsetParser::VarSimpleContext*>(ctx->variable());
+        std::string varName = varSimple->ID()->getText();
+        SymbolInfo* sym = symbolTable->LookUp(varName);
 
-            if (sym) {
-                if (sym->isGlobal) {
-                    emit("MOV EAX, [" + sym->name + "]");
-                } else {
-                    emit("MOV EAX, [EBP" + (sym->offset >= 0 ? "+" + std::to_string(sym->offset) : std::to_string(sym->offset)) + "]");
-                }
-            }
-        } else if (auto* varArray = dynamic_cast<CSubsetParser::VarArrayContext*>(ctx->variable())) {
-            std::string varName = varArray->ID()->getText();
-            SymbolInfo* sym = symbolTable->LookUp(varName);
-
-            visit(varArray->expression());
-            if (sym && sym->isGlobal) {
-                emit("MOV EAX, [" + sym->name + " + EAX*4]");
-            } else if (sym) {
-                emit("NEG EAX");
-                emit("LEA ECX, [EBP" + std::to_string(sym->offset) + "]");
-                emit("MOV EAX, [ECX + EAX*4]");
+        if (sym) {
+            if (sym->isGlobal) {
+                emit("MOV EAX, [" + sym->name + "]");
+            } else {
+                emit("MOV EAX, [EBP" + (sym->offset >= 0 ? "+" + std::to_string(sym->offset) : std::to_string(sym->offset)) + "]");
             }
         }
         return 0;

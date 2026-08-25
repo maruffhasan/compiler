@@ -11,25 +11,11 @@ program
 
 unit
     : var_declaration
-    | func_declaration
     | func_definition
     ;
 
-func_declaration
-    : type_specifier ID LPAREN parameter_list RPAREN SEMICOLON # FuncDeclWithParams
-    | type_specifier ID LPAREN RPAREN SEMICOLON               # FuncDeclNoParams
-    ;
-
 func_definition
-    : type_specifier ID LPAREN parameter_list RPAREN compound_statement # FuncDefWithParams
-    | type_specifier ID LPAREN RPAREN compound_statement               # FuncDefNoParams
-    ;
-
-parameter_list
-    : parameter_list COMMA type_specifier ID # ParamListMultiNamed
-    | parameter_list COMMA type_specifier    # ParamListMultiAnon
-    | type_specifier ID                      # ParamListSingleNamed
-    | type_specifier                         # ParamListSingleAnon
+    : type_specifier ID LPAREN RPAREN compound_statement               # FuncDefNoParams
     ;
 
 compound_statement
@@ -43,15 +29,12 @@ var_declaration
 
 type_specifier
     : INT   # TypeInt
-    | FLOAT # TypeFloat
     | VOID  # TypeVoid
     ;
 
 declaration_list
     : declaration_list COMMA ID                        # DeclListCommaId
-    | declaration_list COMMA ID LTHIRD CONST_INT RTHIRD # DeclListCommaArray
     | ID                                               # DeclListSingleId
-    | ID LTHIRD CONST_INT RTHIRD                       # DeclListSingleArray
     ;
 
 statements
@@ -63,10 +46,6 @@ statement
     : var_declaration                                                     # StmtVarDecl
     | expression_statement                                                # StmtExpr
     | compound_statement                                                  # StmtCompound
-    | FOR LPAREN expression_statement expression_statement expression RPAREN statement # StmtFor
-    | IF LPAREN expression RPAREN statement                               # StmtIf
-    | IF LPAREN expression RPAREN statement ELSE statement                  # StmtIfElse
-    | WHILE LPAREN expression RPAREN statement                            # StmtWhile
     | PRINTLN LPAREN ID RPAREN SEMICOLON                                  # StmtPrintln
     | RETURN expression SEMICOLON                                         # StmtReturn
     ;
@@ -78,7 +57,6 @@ expression_statement
 
 variable
     : ID                         # VarSimple
-    | ID LTHIRD expression RTHIRD # VarArray
     ;
 
 expression
@@ -114,19 +92,9 @@ unary_expression
 
 factor
     : variable                       # FactorVar
-    | ID LPAREN argument_list RPAREN # FactorFuncCall
     | LPAREN expression RPAREN       # FactorParen
     | CONST_INT                      # FactorConstInt
     | CONST_FLOAT                    # FactorConstFloat
     | variable INCOP                 # FactorIncop
     | variable DECOP                 # FactorDecop
-    ;
-
-argument_list
-    : arguments # ArgList
-    ;
-
-arguments
-    : arguments COMMA logic_expression # ArgsMulti
-    | logic_expression                 # ArgsSingle
     ;
