@@ -1,7 +1,8 @@
 grammar CSubset;
 import Lexer;
 
-start : program ;
+
+start : program EOF ;
 
 program
     : program unit
@@ -15,126 +16,117 @@ unit
     ;
 
 func_declaration
-    : type_specifier ID LPAREN parameter_list RPAREN SEMICOLON
-    | type_specifier ID LPAREN RPAREN SEMICOLON
+    : type_specifier ID LPAREN parameter_list RPAREN SEMICOLON # FuncDeclWithParams
+    | type_specifier ID LPAREN RPAREN SEMICOLON               # FuncDeclNoParams
     ;
 
 func_definition
-    : type_specifier ID LPAREN parameter_list RPAREN compound_statement
-    | type_specifier ID LPAREN RPAREN compound_statement
+    : type_specifier ID LPAREN parameter_list RPAREN compound_statement # FuncDefWithParams
+    | type_specifier ID LPAREN RPAREN compound_statement               # FuncDefNoParams
     ;
 
 parameter_list
-    : parameter_list COMMA type_specifier ID
-    | parameter_list COMMA type_specifier
-    | type_specifier ID
-    | type_specifier
-    | parameter_list COMMA type_specifier ADDOP
-    | parameter_list COMMA type_specifier ADDOP ID
-    | type_specifier ADDOP
-    | type_specifier ADDOP ID
+    : parameter_list COMMA type_specifier ID # ParamListMultiNamed
+    | parameter_list COMMA type_specifier    # ParamListMultiAnon
+    | type_specifier ID                      # ParamListSingleNamed
+    | type_specifier                         # ParamListSingleAnon
     ;
 
 compound_statement
-    : LCURL statements RCURL
-    | LCURL RCURL
+    : LCURL statements RCURL # CompoundStmtBody
+    | LCURL RCURL            # CompoundStmtEmpty
     ;
 
 var_declaration
-    : type_specifier declaration_list SEMICOLON ;
+    : type_specifier declaration_list SEMICOLON # VarDecl
+    ;
 
 type_specifier
-    : INT
-    | FLOAT
-    | VOID
+    : INT   # TypeInt
+    | FLOAT # TypeFloat
+    | VOID  # TypeVoid
     ;
 
 declaration_list
-    : declaration_list COMMA ID                                                
-    | declaration_list COMMA ID LTHIRD CONST_INT RTHIRD        
-    | ID                                                         
-    | ID LTHIRD CONST_INT RTHIRD                                 
-    | ID LTHIRD CONST_FLOAT RTHIRD  
-
-    | declaration_list ADDOP ID
+    : declaration_list COMMA ID                        # DeclListCommaId
+    | declaration_list COMMA ID LTHIRD CONST_INT RTHIRD # DeclListCommaArray
+    | ID                                               # DeclListSingleId
+    | ID LTHIRD CONST_INT RTHIRD                       # DeclListSingleArray
     ;
 
 statements
-    : statement
-    | statements statement
+    : statement            # StmtSingle
+    | statements statement # StmtSeq
     ;
 
 statement
-    : var_declaration
-    | expression_statement
-    | compound_statement
-    | FOR LPAREN expression_statement expression_statement expression RPAREN statement
-    | IF LPAREN expression RPAREN statement
-    | IF LPAREN expression RPAREN statement ELSE statement
-    | WHILE LPAREN expression RPAREN statement
-    | PRINTLN LPAREN ID RPAREN SEMICOLON
-    | RETURN expression SEMICOLON
+    : var_declaration                                                     # StmtVarDecl
+    | expression_statement                                                # StmtExpr
+    | compound_statement                                                  # StmtCompound
+    | FOR LPAREN expression_statement expression_statement expression RPAREN statement # StmtFor
+    | IF LPAREN expression RPAREN statement                               # StmtIf
+    | IF LPAREN expression RPAREN statement ELSE statement                  # StmtIfElse
+    | WHILE LPAREN expression RPAREN statement                            # StmtWhile
+    | PRINTLN LPAREN ID RPAREN SEMICOLON                                  # StmtPrintln
+    | RETURN expression SEMICOLON                                         # StmtReturn
     ;
 
 expression_statement
-    : SEMICOLON
-    | expression SEMICOLON
-    | expression
+    : SEMICOLON            # ExprStmtEmpty
+    | expression SEMICOLON # ExprStmtExpr
     ;
 
 variable
-    : ID
-    | ID LTHIRD expression RTHIRD
+    : ID                         # VarSimple
+    | ID LTHIRD expression RTHIRD # VarArray
     ;
 
 expression
-    : logic_expression
-    | variable ASSIGNOP logic_expression
+    : logic_expression                         # ExprLogic
+    | variable ASSIGNOP logic_expression       # ExprAssign
     ;
 
 logic_expression
-    : rel_expression
-    | rel_expression LOGICOP rel_expression
+    : rel_expression                           # LogicRel
+    | rel_expression LOGICOP rel_expression   # LogicOp
     ;
 
 rel_expression
-    : simple_expression
-    | simple_expression RELOP simple_expression
+    : simple_expression                        # RelSimple
+    | simple_expression RELOP simple_expression # RelOp
     ;
 
 simple_expression
-    : term
-    | simple_expression ADDOP term
-    | simple_expression ADDOP ASSIGNOP
+    : term                                     # SimpleTerm
+    | simple_expression ADDOP term             # SimpleAddOp
     ;
 
 term
-    : unary_expression
-    | term MULOP unary_expression
+    : unary_expression                         # TermUnary
+    | term MULOP unary_expression              # TermMulOp
     ;
 
 unary_expression
-    : ADDOP unary_expression
-    | NOT unary_expression
-    | factor
+    : ADDOP unary_expression                   # UnaryAddOp
+    | NOT unary_expression                     # UnaryNot
+    | factor                                   # UnaryFactor
     ;
 
 factor
-    : variable
-    | ID LPAREN argument_list RPAREN
-    | LPAREN expression RPAREN
-    | CONST_INT
-    | CONST_FLOAT
-    | variable INCOP
-    | variable DECOP
+    : variable                       # FactorVar
+    | ID LPAREN argument_list RPAREN # FactorFuncCall
+    | LPAREN expression RPAREN       # FactorParen
+    | CONST_INT                      # FactorConstInt
+    | CONST_FLOAT                    # FactorConstFloat
+    | variable INCOP                 # FactorIncop
+    | variable DECOP                 # FactorDecop
     ;
 
 argument_list
-    : arguments
-    |
+    : arguments # ArgList
     ;
 
 arguments
-    : arguments COMMA logic_expression
-    | logic_expression
+    : arguments COMMA logic_expression # ArgsMulti
+    | logic_expression                 # ArgsSingle
     ;

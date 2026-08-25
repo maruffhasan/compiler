@@ -4,15 +4,12 @@
 #include "antlr4-runtime.h"
 #include "CSubsetLexer.h"
 #include "CSubsetParser.h"
-#include "ASTVisitor.h"
-
+#include "BuildCodeVisitor.h"
 
 using namespace antlr4;
 using namespace std;
 
-ofstream lexLogFile; 
-ofstream logFile("out/log.txt");
-ofstream errorFile("out/error.txt");
+ofstream lexLogFile("out/log.txt");
 
 int main(int argc, const char* argv[]) {
     if (argc < 2) {
@@ -26,23 +23,18 @@ int main(int argc, const char* argv[]) {
         return 1;
     }
 
-
-
     ANTLRInputStream input(inputFile);
     CSubsetLexer lexer(&input);
     CommonTokenStream tokens(&lexer);
     CSubsetParser parser(&tokens);
 
-
     CSubsetParser::StartContext* tree = parser.start();
 
-    ASTVisitor visitor;
+    // Run Assembly Code Generator
+    BuildCodeVisitor visitor("out/code.asm", lexLogFile);
     visitor.visit(tree);
 
-    logFile.close();
-    errorFile.close();
-
-    cout << "Parsing completed." << endl;
+    cout << "Intermediate Code Generation (Sub-Phase 1A) Completed." << endl;
 
     inputFile.close();
     return 0;

@@ -3,3 +3,6 @@
 antlr4 -v 4.13.2 -Dlanguage=Cpp -visitor -no-listener CSubset.g4
 g++ -std=c++17 -w -I/usr/local/include/antlr4-runtime *.cpp -L/usr/local/lib/ -lantlr4-runtime -pthread -o compiler.out
 LD_LIBRARY_PATH=/usr/local/lib ./compiler.out $1
+
+fasm out/code.asm
+./out/code

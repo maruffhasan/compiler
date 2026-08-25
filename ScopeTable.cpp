@@ -73,6 +73,10 @@ SymbolInfo* ScopeTable::Insert(SymbolInfo &si) {
     new_si->array = si.array;
     new_si->var_type = si.var_type;
 
+    new_si->isGlobal = si.isGlobal;
+    new_si->offset = si.offset;
+    new_si->arraySize = si.arraySize;
+
     if (prev == nullptr) {
         buckets[idx] = new_si;
     } else {
