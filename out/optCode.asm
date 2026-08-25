@@ -13,8 +13,6 @@ main:
 	SUB ESP, 128
 	; -- line 6 --
 	MOV EAX, 1
-	PUSH EAX
-	POP EAX
 	MOV [i], EAX
 	; -- line 7 --
 	MOV EAX, [i]
@@ -25,8 +23,6 @@ main:
 	MOV EAX, 5
 	POP EBX
 	ADD EAX, EBX
-	PUSH EAX
-	POP EAX
 	MOV [j], EAX
 	; -- line 10 --
 	MOV EAX, [j]
@@ -41,8 +37,6 @@ main:
 	MOV EAX, [i]
 	POP EBX
 	ADD EAX, EBX
-	PUSH EAX
-	POP EAX
 	MOV [EBP-4], EAX
 	; -- line 13 --
 	MOV EAX, [EBP-4]
@@ -55,8 +49,6 @@ main:
 	XOR EDX, EDX
 	IDIV EBX
 	MOV EAX, EDX
-	PUSH EAX
-	POP EAX
 	MOV [EBP-12], EAX
 	; -- line 16 --
 	MOV EAX, [EBP-12]
@@ -73,8 +65,6 @@ main:
 L_rel_true_0:
 	MOV EAX, 1
 L_rel_end_1:
-	PUSH EAX
-	POP EAX
 	MOV [EBP-16], EAX
 	; -- line 19 --
 	MOV EAX, [EBP-16]
@@ -91,8 +81,6 @@ L_rel_end_1:
 L_rel_true_2:
 	MOV EAX, 1
 L_rel_end_3:
-	PUSH EAX
-	POP EAX
 	MOV [EBP-20], EAX
 	; -- line 22 --
 	MOV EAX, [EBP-20]
@@ -110,8 +98,6 @@ L_bool_false_5:
 L_bool_true_4:
 	MOV EAX, 1
 L_bool_end_6:
-	PUSH EAX
-	POP EAX
 	MOV [EBP-24], EAX
 	; -- line 25 --
 	MOV EAX, [EBP-24]
@@ -129,8 +115,6 @@ L_bool_true_7:
 L_bool_false_8:
 	MOV EAX, 0
 L_bool_end_9:
-	PUSH EAX
-	POP EAX
 	MOV [EBP-24], EAX
 	; -- line 28 --
 	MOV EAX, [EBP-24]
@@ -143,8 +127,6 @@ L_bool_end_9:
 	; -- line 33 --
 	MOV EAX, [EBP-24]
 	NEG EAX
-	PUSH EAX
-	POP EAX
 	MOV [EBP-4], EAX
 	; -- line 34 --
 	MOV EAX, [EBP-4]

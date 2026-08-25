@@ -1,14 +1,19 @@
 #pragma once
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <string>
 #include <vector>
+#include <regex>
+#include "antlr4-runtime.h"
 #include "CSubsetBaseVisitor.h"
 #include "SymbolTable.h"
 
 class BuildCodeVisitor : public CSubsetBaseVisitor {
 private:
     std::ofstream asmFile;
+    std::string unoptimizedFileName;
+    std::string optimizedFileName;
     SymbolTable* symbolTable;
     
     int currentLocalOffset = -4;
@@ -17,6 +22,13 @@ private:
 
     std::string newLabel(const std::string& prefix) {
         return prefix + "_" + std::to_string(labelCount++);
+    }
+
+    void annotateLine(antlr4::ParserRuleContext* ctx) {
+        if (ctx && ctx->getStart()) {
+            size_t line = ctx->getStart()->getLine();
+            emit("; -- line " + std::to_string(line) + " --");
+        }
     }
 
     void processVariableDeclaration(const std::string& varName, bool isArray, int arraySize) {
@@ -50,14 +62,13 @@ private:
 
         symbolTable->EnterScope();
 
-
         if (bodyCtx) {
             visit(bodyCtx);
         }
 
         symbolTable->ExitScope();
 
-        // Function Epilogue
+        // Function Epilogue[cite: 2]
         std::string exitLabel = funcName + "_exit";
         emitLabel(exitLabel);
 
@@ -77,11 +88,12 @@ private:
     }
 
 public:
-    BuildCodeVisitor(const std::string& filename, std::ofstream& logout) {
-        asmFile.open(filename);
+    BuildCodeVisitor(const std::string& codeAsmPath, const std::string& optAsmPath, std::ofstream& logout)
+        : unoptimizedFileName(codeAsmPath), optimizedFileName(optAsmPath) {
+        asmFile.open(unoptimizedFileName);
         symbolTable = new SymbolTable(11, logout);
         
-        // FASM Executable Header
+        // FASM Linux Executable Header[cite: 2]
         asmFile << "format ELF executable 3\nentry main\n\n";
     }
 
@@ -91,6 +103,9 @@ public:
             asmFile.close();
         }
         delete symbolTable;
+
+        // Perform Peephole Optimization Pass[cite: 2]
+        performOptimization();
     }
 
     void emit(const std::string& code) { asmFile << "\t" << code << "\n"; }
@@ -103,13 +118,11 @@ public:
         return 0;
     }
 
-
     virtual std::any visitDeclListCommaId(CSubsetParser::DeclListCommaIdContext *ctx) override {
         visit(ctx->declaration_list());
         processVariableDeclaration(ctx->ID()->getText(), false, 1);
         return 0;
     }
-
 
     // --- Function Definitions ---
 
@@ -121,6 +134,7 @@ public:
     // --- Statements ---
 
     virtual std::any visitStmtPrintln(CSubsetParser::StmtPrintlnContext *ctx) override {
+        annotateLine(ctx);
         std::string varName = ctx->ID()->getText();
         SymbolInfo* sym = symbolTable->LookUp(varName);
 
@@ -130,14 +144,13 @@ public:
             } else {
                 emit("MOV EAX, [EBP" + (sym->offset >= 0 ? "+" + std::to_string(sym->offset) : std::to_string(sym->offset)) + "]");
             }
-        } else {
-            emit("MOV EAX, [EBP-4]");
         }
         emit("CALL OUTDEC");
         return 0;
     }
 
     virtual std::any visitStmtReturn(CSubsetParser::StmtReturnContext *ctx) override {
+        annotateLine(ctx);
         if (ctx->expression()) {
             visit(ctx->expression());
         }
@@ -145,10 +158,10 @@ public:
         return 0;
     }
 
-
     // --- Expressions & Assignments ---
 
     virtual std::any visitExprAssign(CSubsetParser::ExprAssignContext *ctx) override {
+        annotateLine(ctx);
         visit(ctx->logic_expression());
         emit("PUSH EAX");
 
@@ -164,30 +177,48 @@ public:
                 emit("MOV [EBP" + (sym->offset >= 0 ? "+" + std::to_string(sym->offset) : std::to_string(sym->offset)) + "], EAX");
             }
         }
-
         return 0;
     }
 
-    // --- Arithmetic & Logical Operations ---
-
+    // Short-Circuit Implementation for Boolean Logical Expressions[cite: 2]
     virtual std::any visitLogicOp(CSubsetParser::LogicOpContext *ctx) override {
-        visit(ctx->rel_expression(0)); // LHS in EAX
-        emit("CMP EAX, 0");
-        emit("SETNE AL");             // AL = 1 if EAX != 0, else 0
-        emit("MOVZX EAX, AL");
-        emit("PUSH EAX");
-
-        visit(ctx->rel_expression(1)); // RHS in EAX
-        emit("CMP EAX, 0");
-        emit("SETNE AL");             // AL = 1 if EAX != 0, else 0
-        emit("MOVZX EAX, AL");
-        emit("POP EBX");              // LHS in EBX
-
         std::string op = ctx->LOGICOP()->getText();
+        std::string trueLabel = newLabel("L_bool_true");
+        std::string falseLabel = newLabel("L_bool_false");
+        std::string endLabel = newLabel("L_bool_end");
+
         if (op == "&&") {
-            emit("AND EAX, EBX");      // Both must be 1
+            visit(ctx->rel_expression(0));
+            emit("CMP EAX, 0");
+            emit("JE " + falseLabel); // Short-circuit directly to false
+
+            visit(ctx->rel_expression(1));
+            emit("CMP EAX, 0");
+            emit("JE " + falseLabel);
+
+            emitLabel(trueLabel);
+            emit("MOV EAX, 1");
+            emit("JMP " + endLabel);
+
+            emitLabel(falseLabel);
+            emit("MOV EAX, 0");
+            emitLabel(endLabel);
         } else if (op == "||") {
-            emit("OR EAX, EBX");       // Either can be 1
+            visit(ctx->rel_expression(0));
+            emit("CMP EAX, 0");
+            emit("JNE " + trueLabel); // Short-circuit directly to true
+
+            visit(ctx->rel_expression(1));
+            emit("CMP EAX, 0");
+            emit("JNE " + trueLabel);
+
+            emitLabel(falseLabel);
+            emit("MOV EAX, 0");
+            emit("JMP " + endLabel);
+
+            emitLabel(trueLabel);
+            emit("MOV EAX, 1");
+            emitLabel(endLabel);
         }
         return 0;
     }
@@ -256,28 +287,21 @@ public:
     // --- Unary Expressions ---
 
     virtual std::any visitUnaryAddOp(CSubsetParser::UnaryAddOpContext *ctx) override {
-        visit(ctx->unary_expression()); // Result of inner expression is evaluated into EAX
-
+        visit(ctx->unary_expression());
         std::string op = ctx->ADDOP()->getText();
         if (op == "-") {
-            emit("NEG EAX"); // Two's complement negation (EAX = -EAX)
+            emit("NEG EAX");
         }
-        // If op == "+", no action is needed as standard value is already in EAX
-        
         return 0;
     }
 
     virtual std::any visitUnaryNot(CSubsetParser::UnaryNotContext *ctx) override {
-        visit(ctx->unary_expression()); // Result evaluated into EAX
-
-        // Logical NOT: If EAX is 0, set EAX to 1. If EAX is non-zero, set EAX to 0.
+        visit(ctx->unary_expression());
         emit("CMP EAX, 0");
-        emit("SETE AL");      // AL = 1 if EAX == 0, else 0
-        emit("MOVZX EAX, AL"); // Zero-extend AL back into 32-bit EAX
-
+        emit("SETE AL");
+        emit("MOVZX EAX, AL");
         return 0;
     }
-
 
     // --- Factors ---
 
@@ -302,29 +326,27 @@ public:
     }
 
     virtual std::any visitFactorIncop(CSubsetParser::FactorIncopContext *ctx) override {
-        if (auto* varSimple = dynamic_cast<CSubsetParser::VarSimpleContext*>(ctx->variable())) {
-            std::string varName = varSimple->ID()->getText();
-            SymbolInfo* sym = symbolTable->LookUp(varName);
+        auto* varSimple = dynamic_cast<CSubsetParser::VarSimpleContext*>(ctx->variable());
+        std::string varName = varSimple->ID()->getText();
+        SymbolInfo* sym = symbolTable->LookUp(varName);
 
-            if (sym) {
-                std::string varRef = sym->isGlobal ? "[" + sym->name + "]" : "[EBP" + (sym->offset >= 0 ? "+" + std::to_string(sym->offset) : std::to_string(sym->offset)) + "]";
-                emit("MOV EAX, " + varRef);
-                emit("INC dword " + varRef);
-            }
+        if (sym) {
+            std::string varRef = sym->isGlobal ? "[" + sym->name + "]" : "[EBP" + (sym->offset >= 0 ? "+" + std::to_string(sym->offset) : std::to_string(sym->offset)) + "]";
+            emit("MOV EAX, " + varRef);
+            emit("INC dword " + varRef);
         }
         return 0;
     }
 
     virtual std::any visitFactorDecop(CSubsetParser::FactorDecopContext *ctx) override {
-        if (auto* varSimple = dynamic_cast<CSubsetParser::VarSimpleContext*>(ctx->variable())) {
-            std::string varName = varSimple->ID()->getText();
-            SymbolInfo* sym = symbolTable->LookUp(varName);
+        auto* varSimple = dynamic_cast<CSubsetParser::VarSimpleContext*>(ctx->variable());
+        std::string varName = varSimple->ID()->getText();
+        SymbolInfo* sym = symbolTable->LookUp(varName);
 
-            if (sym) {
-                std::string varRef = sym->isGlobal ? "[" + sym->name + "]" : "[EBP" + (sym->offset >= 0 ? "+" + std::to_string(sym->offset) : std::to_string(sym->offset)) + "]";
-                emit("MOV EAX, " + varRef);
-                emit("DEC dword " + varRef);
-            }
+        if (sym) {
+            std::string varRef = sym->isGlobal ? "[" + sym->name + "]" : "[EBP" + (sym->offset >= 0 ? "+" + std::to_string(sym->offset) : std::to_string(sym->offset)) + "]";
+            emit("MOV EAX, " + varRef);
+            emit("DEC dword " + varRef);
         }
         return 0;
     }
@@ -387,5 +409,74 @@ private:
                 << "\tPOP ECX\n"
                 << "\tPOP EBX\n"
                 << "\tRET\n";
+    }
+
+    // Peephole Optimizer Implementation[cite: 2]
+    void performOptimization() {
+        std::ifstream inFile(unoptimizedFileName);
+        if (!inFile.is_open()) return;
+
+        std::vector<std::string> lines;
+        std::string line;
+        while (std::getline(inFile, line)) {
+            lines.push_back(line);
+        }
+        inFile.close();
+
+        std::vector<std::string> optimized;
+        size_t n = lines.size();
+
+        for (size_t i = 0; i < n; ++i) {
+            std::string cur = lines[i];
+
+            // Clean leading/trailing whitespaces for pattern checks
+            std::string trimmed = std::regex_replace(cur, std::regex("^\\s+|\\s+$"), "");
+
+            // 1. Remove redundant operations (e.g., ADD EAX, 0 or IMUL EAX, 1)[cite: 2]
+            if (trimmed == "ADD EAX, 0" || trimmed == "SUB EAX, 0" || trimmed == "IMUL EAX, 1") {
+                continue; // Redundant operation, skip line
+            }
+
+            // Lookahead check for instruction pairs
+            if (i + 1 < n) {
+                std::string nextLine = lines[i + 1];
+                std::string trimmedNext = std::regex_replace(nextLine, std::regex("^\\s+|\\s+$"), "");
+
+                // 2. Remove redundant MOV AX, a / MOV a, AX pairs[cite: 2]
+                std::smatch m1, m2;
+                std::regex movRegex("^MOV\\s+([^,]+),\\s*(.+)$");
+                if (std::regex_match(trimmed, m1, movRegex) && std::regex_match(trimmedNext, m2, movRegex)) {
+                    if (m1[1].str() == m2[2].str() && m1[2].str() == m2[1].str()) {
+                        optimized.push_back(cur);
+                        i++; // Skip redundant inverse MOV instruction
+                        continue;
+                    }
+                }
+
+                // 3. Remove redundant PUSH reg / POP reg pairs[cite: 2]
+                std::regex pushRegex("^PUSH\\s+(.+)$");
+                std::regex popRegex("^POP\\s+(.+)$");
+                if (std::regex_match(trimmed, m1, pushRegex) && std::regex_match(trimmedNext, m2, popRegex)) {
+                    if (m1[1].str() == m2[1].str()) {
+                        i++; // Skip both PUSH and POP
+                        continue;
+                    }
+                }
+
+                // 4. Remove redundant labels[cite: 2]
+                if (!trimmed.empty() && trimmed.back() == ':' && !trimmedNext.empty() && trimmedNext.back() == ':') {
+                    // Two consecutive labels found, combine/skip first label
+                    continue;
+                }
+            }
+
+            optimized.push_back(cur);
+        }
+
+        std::ofstream outFile(optimizedFileName);
+        for (const auto& optLine : optimized) {
+            outFile << optLine << "\n";
+        }
+        outFile.close();
     }
 };

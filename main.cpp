@@ -31,7 +31,7 @@ int main(int argc, const char* argv[]) {
     CSubsetParser::StartContext* tree = parser.start();
 
     // Run Assembly Code Generator
-    BuildCodeVisitor visitor("out/code.asm", lexLogFile);
+    BuildCodeVisitor visitor("out/code.asm", "out/optCode.asm", lexLogFile);
     visitor.visit(tree);
 
     cout << "Intermediate Code Generation (Sub-Phase 1A) Completed." << endl;

@@ -2,5 +2,5 @@
 
 ./compiler.out $1
 
-fasm out/code.asm
+fasm out/optCode.asm
 ./out/code
