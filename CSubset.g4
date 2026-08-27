@@ -2,7 +2,7 @@ grammar CSubset;
 import Lexer;
 
 
-start : program EOF ;
+start : program ;
 
 program
     : program unit
@@ -15,12 +15,12 @@ unit
     ;
 
 func_definition
-    : type_specifier ID LPAREN RPAREN compound_statement               # FuncDefNoParams
+    : type_specifier ID LPAREN RPAREN compound_statement   # FuncDefNoParams
     ;
 
 compound_statement
-    : LCURL statements RCURL # CompoundStmtBody
-    | LCURL RCURL            # CompoundStmtEmpty
+    : LCURL statements RCURL                    # CompoundStmtBody
+    | LCURL RCURL                               # CompoundStmtEmpty
     ;
 
 var_declaration
@@ -28,73 +28,73 @@ var_declaration
     ;
 
 type_specifier
-    : INT   # TypeInt
-    | VOID  # TypeVoid
+    : INT                                       # TypeInt
+    | VOID                                      # TypeVoid
     ;
 
 declaration_list
-    : declaration_list COMMA ID                        # DeclListCommaId
-    | ID                                               # DeclListSingleId
+    : declaration_list COMMA ID                 # DeclListCommaId
+    | ID                                        # DeclListSingleId
     ;
 
 statements
-    : statement            # StmtSingle
-    | statements statement # StmtSeq
+    : statement                                 # StmtSingle
+    | statements statement                      # StmtSeq
     ;
 
 statement
-    : var_declaration                                                     # StmtVarDecl
-    | expression_statement                                                # StmtExpr
-    | compound_statement                                                  # StmtCompound
-    | PRINTLN LPAREN ID RPAREN SEMICOLON                                  # StmtPrintln
-    | RETURN expression SEMICOLON                                         # StmtReturn
+    : var_declaration                           # StmtVarDecl
+    | expression_statement                      # StmtExpr
+    | compound_statement                        # StmtCompound
+    | PRINTLN LPAREN ID RPAREN SEMICOLON        # StmtPrintln
+    | RETURN expression SEMICOLON               # StmtReturn
     ;
 
 expression_statement
-    : SEMICOLON            # ExprStmtEmpty
-    | expression SEMICOLON # ExprStmtExpr
+    : SEMICOLON                                 # ExprStmtEmpty
+    | expression SEMICOLON                      # ExprStmtExpr
     ;
 
 variable
-    : ID                         # VarSimple
+    : ID                                        # VarSimple
     ;
 
 expression
-    : logic_expression                         # ExprLogic
-    | variable ASSIGNOP logic_expression       # ExprAssign
+    : logic_expression                          # ExprLogic
+    | variable ASSIGNOP logic_expression        # ExprAssign
     ;
 
 logic_expression
-    : rel_expression                           # LogicRel
-    | rel_expression LOGICOP rel_expression   # LogicOp
+    : rel_expression                            # LogicRel
+    | rel_expression LOGICOP rel_expression     # LogicOp
     ;
 
 rel_expression
-    : simple_expression                        # RelSimple
+    : simple_expression                         # RelSimple
     | simple_expression RELOP simple_expression # RelOp
     ;
 
 simple_expression
-    : term                                     # SimpleTerm
-    | simple_expression ADDOP term             # SimpleAddOp
+    : term                                      # SimpleTerm
+    | simple_expression ADDOP term              # SimpleAddOp
     ;
 
 term
-    : unary_expression                         # TermUnary
-    | term MULOP unary_expression              # TermMulOp
+    : unary_expression                          # TermUnary
+    | term MULOP unary_expression               # TermMulOp
     ;
 
 unary_expression
-    : ADDOP unary_expression                   # UnaryAddOp
-    | NOT unary_expression                     # UnaryNot
-    | factor                                   # UnaryFactor
+    : ADDOP unary_expression                    # UnaryAddOp
+    | NOT unary_expression                      # UnaryNot
+    | factor                                    # UnaryFactor
     ;
 
 factor
-    : variable                       # FactorVar
-    | LPAREN expression RPAREN       # FactorParen
-    | CONST_INT                      # FactorConstInt
-    | CONST_FLOAT                    # FactorConstFloat
-    | variable INCOP                 # FactorIncop
-    | variable DECOP                 # FactorDecop
+    : variable                                  # FactorVar
+    | LPAREN expression RPAREN                  # FactorParen
+    | CONST_INT                                 # FactorConstInt
+    | CONST_FLOAT                               # FactorConstFloat
+    | variable INCOP                            # FactorIncop
+    | variable DECOP                            # FactorDecop
     ;

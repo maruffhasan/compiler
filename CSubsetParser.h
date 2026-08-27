@@ -71,7 +71,6 @@ public:
     StartContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
     ProgramContext *program();
-    antlr4::tree::TerminalNode *EOF();
 
 
     virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
