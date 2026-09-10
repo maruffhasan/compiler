@@ -4,7 +4,6 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include <unordered_map>
 #include <regex>
 #include "antlr4-runtime.h"
 #include "CSubsetBaseVisitor.h"
@@ -19,16 +18,13 @@ private:
     string optimizedFileName;
     SymbolTable* symbolTable;
 
-    int currentLocalOffset = -4;     // next local variable slot (grows downward)
-    int currentParamOffset = 8;      // next parameter slot (grows upward), reset per function
+    int currentLocalOffset = -4;
+    int currentParamOffset = 8;
     int labelCount = 0;
     bool isGlobalScope = true;
 
-    string currentFunctionName;
     string currentFunctionExitLabel = "main_exit";
 
-    // Function name -> declared parameter count (used for callee RET-N cleanup bookkeeping)
-    unordered_map<string, int> funcParamCount;
 
     string newLabel(const string& prefix) {
         return prefix + "_" + to_string(labelCount++);
@@ -41,12 +37,6 @@ private:
         }
     }
 
-    // ---------------------------------------------------------------
-    // Symbol helpers
-    // ---------------------------------------------------------------
-
-    // Returns the addressing-mode string for a simple (non-array) symbol,
-    // e.g. "[x]" for a global or "[EBP-4]" / "[EBP+8]" for a local/param.
     string addrOf(SymbolInfo* sym) {
         if (!sym) return "";
         if (sym->isGlobal) return "[" + sym->name + "]";
@@ -70,7 +60,7 @@ private:
             return "[" + varName + " + EBX]";
         } else {
             // local array: element address = EBP + (sym->offset - byteOffset)
-            emit("MOV ESI, " + to_string(sym ? sym->offset : 0));
+            emit("MOV ESI, " + to_string(sym->offset));
             emit("SUB ESI, EAX");
             return "[EBP + ESI]";
         }
@@ -79,10 +69,10 @@ private:
     // Dispatches on VarSimple vs VarArray and returns the memory operand
     // string for that variable / array element.
     string resolveVariableAddress(CSubsetParser::VariableContext* vctx) {
-        if (auto* v = dynamic_cast<CSubsetParser::VarSimpleContext*>(vctx)) {
+        if (auto* v = static_cast<CSubsetParser::VarSimpleContext*>(vctx)) {
             SymbolInfo* sym = symbolTable->LookUp(v->ID()->getText());
             return addrOf(sym);
-        } else if (auto* v = dynamic_cast<CSubsetParser::VarArrayContext*>(vctx)) {
+        } else if (auto* v = static_cast<CSubsetParser::VarArrayContext*>(vctx)) {
             return computeArrayAddress(v);
         }
         return "";
@@ -111,13 +101,13 @@ private:
 
     int countParams(CSubsetParser::Parameter_listContext* ctx) {
         if (!ctx) return 0;
-        if (auto* c = dynamic_cast<CSubsetParser::ParamListMultiNamedContext*>(ctx)) {
+        if (auto* c = static_cast<CSubsetParser::ParamListMultiNamedContext*>(ctx)) {
             return 1 + countParams(c->parameter_list());
-        } else if (auto* c = dynamic_cast<CSubsetParser::ParamListMultiUnnamedContext*>(ctx)) {
+        } else if (auto* c = static_cast<CSubsetParser::ParamListMultiUnnamedContext*>(ctx)) {
             return 1 + countParams(c->parameter_list());
-        } else if (dynamic_cast<CSubsetParser::ParamListSingleNamedContext*>(ctx)) {
+        } else if (static_cast<CSubsetParser::ParamListSingleNamedContext*>(ctx)) {
             return 1;
-        } else if (dynamic_cast<CSubsetParser::ParamListSingleUnnamedContext*>(ctx)) {
+        } else if (static_cast<CSubsetParser::ParamListSingleUnnamedContext*>(ctx)) {
             return 1;
         }
         return 0;
@@ -135,15 +125,15 @@ private:
     // first declared parameter ends up at EBP+8, the next at EBP+12, etc.
     void registerParams(CSubsetParser::Parameter_listContext* ctx) {
         if (!ctx) return;
-        if (auto* c = dynamic_cast<CSubsetParser::ParamListMultiNamedContext*>(ctx)) {
+        if (auto* c = static_cast<CSubsetParser::ParamListMultiNamedContext*>(ctx)) {
             registerParams(c->parameter_list());
             addParamSymbol(c->ID()->getText());
-        } else if (auto* c = dynamic_cast<CSubsetParser::ParamListMultiUnnamedContext*>(ctx)) {
+        } else if (auto* c = static_cast<CSubsetParser::ParamListMultiUnnamedContext*>(ctx)) {
             registerParams(c->parameter_list());
             currentParamOffset += 4; // unnamed param still occupies a slot
-        } else if (auto* c = dynamic_cast<CSubsetParser::ParamListSingleNamedContext*>(ctx)) {
+        } else if (auto* c = static_cast<CSubsetParser::ParamListSingleNamedContext*>(ctx)) {
             addParamSymbol(c->ID()->getText());
-        } else if (dynamic_cast<CSubsetParser::ParamListSingleUnnamedContext*>(ctx)) {
+        } else if (static_cast<CSubsetParser::ParamListSingleUnnamedContext*>(ctx)) {
             currentParamOffset += 4;
         }
     }
@@ -154,14 +144,14 @@ private:
 
     void pushArgumentsRec(CSubsetParser::ArgumentsContext* ctx) {
         if (!ctx) return;
-        if (auto* c = dynamic_cast<CSubsetParser::ArgumentsMultiContext*>(ctx)) {
+        if (auto* c = static_cast<CSubsetParser::ArgumentsMultiContext*>(ctx)) {
             // Evaluate/push the rightmost argument at this level first,
             // then recurse into the remaining left part, so the FIRST
             // (leftmost) argument ends up pushed LAST -> closest to EBP+8.
             visit(c->logic_expression());
             emit("PUSH EAX");
             pushArgumentsRec(c->arguments());
-        } else if (auto* c = dynamic_cast<CSubsetParser::ArgumentsSingleContext*>(ctx)) {
+        } else if (auto* c = static_cast<CSubsetParser::ArgumentsSingleContext*>(ctx)) {
             visit(c->logic_expression());
             emit("PUSH EAX");
         }
@@ -169,48 +159,13 @@ private:
 
     void pushArguments(CSubsetParser::Argument_listContext* ctx) {
         if (!ctx) return;
-        if (auto* c = dynamic_cast<CSubsetParser::ArgListNonEmptyContext*>(ctx)) {
+        if (auto* c = static_cast<CSubsetParser::ArgListNonEmptyContext*>(ctx)) {
             pushArgumentsRec(c->arguments());
         }
         // ArgListEmptyContext: nothing to push
     }
 
-    // ---------------------------------------------------------------
-    // Function signature pre-pass (so calls work regardless of source order)
-    // ---------------------------------------------------------------
-
-    void collectUnitSignature(CSubsetParser::UnitContext* uctx) {
-        if (!uctx) return;
-        if (auto* c = dynamic_cast<CSubsetParser::UnitFuncDeclContext*>(uctx)) {
-            auto* fd = c->func_declaration();
-            if (auto* f1 = dynamic_cast<CSubsetParser::FuncDeclWithParamsContext*>(fd)) {
-                funcParamCount[f1->ID()->getText()] = countParams(f1->parameter_list());
-            } else if (auto* f2 = dynamic_cast<CSubsetParser::FuncDeclNoParamsContext*>(fd)) {
-                funcParamCount[f2->ID()->getText()] = 0;
-            }
-        } else if (auto* c = dynamic_cast<CSubsetParser::UnitFuncDefContext*>(uctx)) {
-            auto* fd = c->func_definition();
-            if (auto* f1 = dynamic_cast<CSubsetParser::FuncDefWithParamsContext*>(fd)) {
-                funcParamCount[f1->ID()->getText()] = countParams(f1->parameter_list());
-            } else if (auto* f2 = dynamic_cast<CSubsetParser::FuncDefNoParamsContext*>(fd)) {
-                funcParamCount[f2->ID()->getText()] = 0;
-            }
-        }
-    }
-
-    void collectSignatures(CSubsetParser::ProgramContext* ctx) {
-        if (!ctx) return;
-        if (auto* c = dynamic_cast<CSubsetParser::ProgramUnitContext*>(ctx)) {
-            collectSignatures(c->program());
-            collectUnitSignature(c->unit());
-        } else if (auto* c = dynamic_cast<CSubsetParser::ProgramSingleUnitContext*>(ctx)) {
-            collectUnitSignature(c->unit());
-        }
-    }
-
-    // ---------------------------------------------------------------
-    // Function definition codegen
-    // ---------------------------------------------------------------
+    // Function definition 
 
     void handleFuncDefinition(const string& funcName,
                                CSubsetParser::Parameter_listContext* paramCtx,
@@ -218,7 +173,6 @@ private:
         isGlobalScope = false;
         currentLocalOffset = -4;
         currentParamOffset = 8;
-        currentFunctionName = funcName;
         currentFunctionExitLabel = funcName + "_exit";
 
         asmFile << "\nsegment readable executable\n";
@@ -235,7 +189,6 @@ private:
             paramCount = countParams(paramCtx);
             registerParams(paramCtx);
         }
-        funcParamCount[funcName] = paramCount;
 
         if (bodyCtx) {
             visit(bodyCtx);
@@ -283,33 +236,6 @@ public:
     void emit(const string& code) { asmFile << "\t" << code << "\n"; }
     void emitLabel(const string& label) { asmFile << label << ":\n"; }
 
-    // -----------------------------------------------------------
-    // Entry point — collect function signatures first so calls to
-    // functions defined later in the file still work.
-    // -----------------------------------------------------------
-
-    virtual any visitStart(CSubsetParser::StartContext *ctx) override {
-        collectSignatures(ctx->program());
-        return visitChildren(ctx);
-    }
-
-    // -----------------------------------------------------------
-    // Function declarations (prototypes) — no code, just bookkeeping
-    // -----------------------------------------------------------
-
-    virtual any visitFuncDeclWithParams(CSubsetParser::FuncDeclWithParamsContext *ctx) override {
-        funcParamCount[ctx->ID()->getText()] = countParams(ctx->parameter_list());
-        return 0;
-    }
-
-    virtual any visitFuncDeclNoParams(CSubsetParser::FuncDeclNoParamsContext *ctx) override {
-        funcParamCount[ctx->ID()->getText()] = 0;
-        return 0;
-    }
-
-    // -----------------------------------------------------------
-    // Function definitions
-    // -----------------------------------------------------------
 
     virtual any visitFuncDefNoParams(CSubsetParser::FuncDefNoParamsContext *ctx) override {
         handleFuncDefinition(ctx->ID()->getText(), nullptr, ctx->compound_statement());
@@ -321,11 +247,6 @@ public:
         return 0;
     }
 
-    // -----------------------------------------------------------
-    // Compound statement -> its own scope (so nested blocks in
-    // if/while/for bodies get properly scoped locals)
-    // -----------------------------------------------------------
-
     virtual any visitCompoundWithStmts(CSubsetParser::CompoundWithStmtsContext *ctx) override {
         symbolTable->EnterScope();
         visit(ctx->statements());
@@ -333,13 +254,7 @@ public:
         return 0;
     }
 
-    virtual any visitCompoundEmpty(CSubsetParser::CompoundEmptyContext *ctx) override {
-        return 0;
-    }
-
-    // -----------------------------------------------------------
     // Declarations
-    // -----------------------------------------------------------
 
     virtual any visitDeclListCommaId(CSubsetParser::DeclListCommaIdContext *ctx) override {
         visit(ctx->declaration_list());
@@ -365,9 +280,7 @@ public:
         return 0;
     }
 
-    // -----------------------------------------------------------
     // Statements
-    // -----------------------------------------------------------
 
     virtual any visitStmtPrintln(CSubsetParser::StmtPrintlnContext *ctx) override {
         annotateLine(ctx);
@@ -381,9 +294,8 @@ public:
 
     virtual any visitStmtReturn(CSubsetParser::StmtReturnContext *ctx) override {
         annotateLine(ctx);
-        if (ctx->expression()) {
-            visit(ctx->expression());
-        }
+        visit(ctx->expression());
+
         emit("JMP " + currentFunctionExitLabel);
         return 0;
     }
@@ -441,7 +353,7 @@ public:
         emit("JE " + endLabel);
 
         visit(ctx->statement());   // body
-        visit(ctx->expression());  // increment, result discarded
+        visit(ctx->expression());  // increment
 
         emit("JMP " + startLabel);
         emitLabel(endLabel);
@@ -449,19 +361,11 @@ public:
     }
 
     virtual any visitExprStmtEmpty(CSubsetParser::ExprStmtEmptyContext *ctx) override {
-        // An empty for-condition means "always true"
-        emit("MOV EAX, 1");
+        emit("MOV EAX, 1"); // An empty for condition means "always true"
         return 0;
     }
 
-    virtual any visitExprStmtExpr(CSubsetParser::ExprStmtExprContext *ctx) override {
-        visit(ctx->expression());
-        return 0;
-    }
-
-    // -----------------------------------------------------------
     // Expressions & Assignments
-    // -----------------------------------------------------------
 
     virtual any visitExprAssign(CSubsetParser::ExprAssignContext *ctx) override {
         annotateLine(ctx);
@@ -578,9 +482,7 @@ public:
         return 0;
     }
 
-    // -----------------------------------------------------------
     // Unary Expressions
-    // -----------------------------------------------------------
 
     virtual any visitUnaryAddOp(CSubsetParser::UnaryAddOpContext *ctx) override {
         visit(ctx->unary_expression());
@@ -599,19 +501,10 @@ public:
         return 0;
     }
 
-    // -----------------------------------------------------------
     // Factors
-    // -----------------------------------------------------------
 
     virtual any visitFactorConstInt(CSubsetParser::FactorConstIntContext *ctx) override {
         emit("MOV EAX, " + ctx->CONST_INT()->getText());
-        return 0;
-    }
-
-    virtual any visitFactorConstFloat(CSubsetParser::FactorConstFloatContext *ctx) override {
-        // Floating point is out of scope for this assignment.
-        emit("; float literal ignored (unsupported): " + ctx->CONST_FLOAT()->getText());
-        emit("MOV EAX, 0");
         return 0;
     }
 
@@ -623,9 +516,7 @@ public:
 
     virtual any visitFactorFuncCall(CSubsetParser::FactorFuncCallContext *ctx) override {
         pushArguments(ctx->argument_list());
-        emit("CALL " + ctx->ID()->getText());
-        // callee cleans up its own arguments (callee-cleanup convention);
-        // return value is already in EAX
+        emit("CALL " + ctx->ID()->getText());  // callee-cleanup convention, return value is in EAX
         return 0;
     }
 
