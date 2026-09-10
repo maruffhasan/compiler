@@ -19,11 +19,35 @@ public:
     return visitChildren(ctx);
   }
 
-  virtual std::any visitProgram(CSubsetParser::ProgramContext *ctx) override {
+  virtual std::any visitProgramSingleUnit(CSubsetParser::ProgramSingleUnitContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual std::any visitUnit(CSubsetParser::UnitContext *ctx) override {
+  virtual std::any visitProgramUnit(CSubsetParser::ProgramUnitContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitUnitVarDecl(CSubsetParser::UnitVarDeclContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitUnitFuncDecl(CSubsetParser::UnitFuncDeclContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitUnitFuncDef(CSubsetParser::UnitFuncDefContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitFuncDeclWithParams(CSubsetParser::FuncDeclWithParamsContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitFuncDeclNoParams(CSubsetParser::FuncDeclNoParamsContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitFuncDefWithParams(CSubsetParser::FuncDefWithParamsContext *ctx) override {
     return visitChildren(ctx);
   }
 
@@ -31,11 +55,27 @@ public:
     return visitChildren(ctx);
   }
 
-  virtual std::any visitCompoundStmtBody(CSubsetParser::CompoundStmtBodyContext *ctx) override {
+  virtual std::any visitParamListMultiUnnamed(CSubsetParser::ParamListMultiUnnamedContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual std::any visitCompoundStmtEmpty(CSubsetParser::CompoundStmtEmptyContext *ctx) override {
+  virtual std::any visitParamListSingleNamed(CSubsetParser::ParamListSingleNamedContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitParamListSingleUnnamed(CSubsetParser::ParamListSingleUnnamedContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitParamListMultiNamed(CSubsetParser::ParamListMultiNamedContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitCompoundWithStmts(CSubsetParser::CompoundWithStmtsContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitCompoundEmpty(CSubsetParser::CompoundEmptyContext *ctx) override {
     return visitChildren(ctx);
   }
 
@@ -47,7 +87,15 @@ public:
     return visitChildren(ctx);
   }
 
+  virtual std::any visitTypeFloat(CSubsetParser::TypeFloatContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
   virtual std::any visitTypeVoid(CSubsetParser::TypeVoidContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitDeclListSingleIdArray(CSubsetParser::DeclListSingleIdArrayContext *ctx) override {
     return visitChildren(ctx);
   }
 
@@ -59,11 +107,15 @@ public:
     return visitChildren(ctx);
   }
 
-  virtual std::any visitStmtSingle(CSubsetParser::StmtSingleContext *ctx) override {
+  virtual std::any visitDeclListCommaIdArray(CSubsetParser::DeclListCommaIdArrayContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual std::any visitStmtSeq(CSubsetParser::StmtSeqContext *ctx) override {
+  virtual std::any visitStatementsSingle(CSubsetParser::StatementsSingleContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitStatementsMulti(CSubsetParser::StatementsMultiContext *ctx) override {
     return visitChildren(ctx);
   }
 
@@ -71,11 +123,27 @@ public:
     return visitChildren(ctx);
   }
 
-  virtual std::any visitStmtExpr(CSubsetParser::StmtExprContext *ctx) override {
+  virtual std::any visitStmtExprStmt(CSubsetParser::StmtExprStmtContext *ctx) override {
     return visitChildren(ctx);
   }
 
   virtual std::any visitStmtCompound(CSubsetParser::StmtCompoundContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitStmtFor(CSubsetParser::StmtForContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitStmtIf(CSubsetParser::StmtIfContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitStmtIfElse(CSubsetParser::StmtIfElseContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitStmtWhile(CSubsetParser::StmtWhileContext *ctx) override {
     return visitChildren(ctx);
   }
 
@@ -99,6 +167,10 @@ public:
     return visitChildren(ctx);
   }
 
+  virtual std::any visitVarArray(CSubsetParser::VarArrayContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
   virtual std::any visitExprLogic(CSubsetParser::ExprLogicContext *ctx) override {
     return visitChildren(ctx);
   }
@@ -107,7 +179,7 @@ public:
     return visitChildren(ctx);
   }
 
-  virtual std::any visitLogicRel(CSubsetParser::LogicRelContext *ctx) override {
+  virtual std::any visitLogicSingle(CSubsetParser::LogicSingleContext *ctx) override {
     return visitChildren(ctx);
   }
 
@@ -115,7 +187,7 @@ public:
     return visitChildren(ctx);
   }
 
-  virtual std::any visitRelSimple(CSubsetParser::RelSimpleContext *ctx) override {
+  virtual std::any visitRelSingle(CSubsetParser::RelSingleContext *ctx) override {
     return visitChildren(ctx);
   }
 
@@ -155,6 +227,10 @@ public:
     return visitChildren(ctx);
   }
 
+  virtual std::any visitFactorFuncCall(CSubsetParser::FactorFuncCallContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
   virtual std::any visitFactorParen(CSubsetParser::FactorParenContext *ctx) override {
     return visitChildren(ctx);
   }
@@ -172,6 +248,22 @@ public:
   }
 
   virtual std::any visitFactorDecop(CSubsetParser::FactorDecopContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitArgListNonEmpty(CSubsetParser::ArgListNonEmptyContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitArgListEmpty(CSubsetParser::ArgListEmptyContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitArgumentsMulti(CSubsetParser::ArgumentsMultiContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitArgumentsSingle(CSubsetParser::ArgumentsSingleContext *ctx) override {
     return visitChildren(ctx);
   }
 

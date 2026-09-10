@@ -1,155 +1,115 @@
 format ELF executable 3
 entry main
 
-segment readable writeable
-i dd 1 dup (0)
-segment readable writeable
-j dd 1 dup (0)
+
+segment readable executable
+func:
+	PUSH EBP
+	MOV EBP, ESP
+	SUB ESP, 128
+	; -- line 3 --
+	MOV EAX, [EBP+8]
+	PUSH EAX
+	MOV EAX, 0
+	POP EBX
+	CMP EBX, EAX
+	JE L_rel_true_0
+	MOV EAX, 0
+	JMP L_rel_end_1
+L_rel_true_0:
+	MOV EAX, 1
+L_rel_end_1:
+	CMP EAX, 0
+	JE L_if_end_2
+	; -- line 3 --
+	MOV EAX, 0
+	JMP func_exit
+L_if_end_2:
+	; -- line 4 --
+	MOV EAX, [EBP+8]
+	PUSH EAX
+	POP EAX
+	MOV [EBP-4], EAX
+	; -- line 5 --
+	MOV EAX, [EBP-4]
+	PUSH EAX
+	MOV EAX, 1
+	PUSH EAX
+	MOV EAX, [EBP+8]
+	POP EBX
+	SUB EAX, EBX
+	PUSH EAX
+	CALL func
+	POP EBX
+	ADD EAX, EBX
+	JMP func_exit
+func_exit:
+	ADD ESP, 128
+	POP EBP
+	RET 4
+
+segment readable executable
+func2:
+	PUSH EBP
+	MOV EBP, ESP
+	SUB ESP, 128
+	; -- line 10 --
+	MOV EAX, [EBP+8]
+	PUSH EAX
+	MOV EAX, 0
+	POP EBX
+	CMP EBX, EAX
+	JE L_rel_true_3
+	MOV EAX, 0
+	JMP L_rel_end_4
+L_rel_true_3:
+	MOV EAX, 1
+L_rel_end_4:
+	CMP EAX, 0
+	JE L_if_end_5
+	; -- line 10 --
+	MOV EAX, 0
+	JMP func2_exit
+L_if_end_5:
+	; -- line 11 --
+	MOV EAX, [EBP+8]
+	PUSH EAX
+	POP EAX
+	MOV [EBP-4], EAX
+	; -- line 12 --
+	MOV EAX, [EBP-4]
+	PUSH EAX
+	MOV EAX, 1
+	PUSH EAX
+	MOV EAX, [EBP+8]
+	POP EBX
+	SUB EAX, EBX
+	PUSH EAX
+	CALL func
+	POP EBX
+	ADD EAX, EBX
+	JMP func2_exit
+func2_exit:
+	ADD ESP, 128
+	POP EBP
+	RET 4
 
 segment readable executable
 main:
 	PUSH EBP
 	MOV EBP, ESP
 	SUB ESP, 128
-	; -- line 6 --
-	MOV EAX, 1
+	; -- line 17 --
+	MOV EAX, 7
 	PUSH EAX
-	POP EAX
-	MOV [i], EAX
-	; -- line 7 --
-	MOV EAX, [i]
-	CALL OUTDEC
-	; -- line 9 --
-	MOV EAX, 8
-	PUSH EAX
-	MOV EAX, 5
-	POP EBX
-	ADD EAX, EBX
-	PUSH EAX
-	POP EAX
-	MOV [j], EAX
-	; -- line 10 --
-	MOV EAX, [j]
-	CALL OUTDEC
-	; -- line 12 --
-	MOV EAX, [j]
-	PUSH EAX
-	MOV EAX, 2
-	POP EBX
-	IMUL EAX, EBX
-	PUSH EAX
-	MOV EAX, [i]
-	POP EBX
-	ADD EAX, EBX
+	CALL func
 	PUSH EAX
 	POP EAX
 	MOV [EBP-4], EAX
-	; -- line 13 --
-	MOV EAX, [EBP-4]
-	CALL OUTDEC
-	; -- line 15 --
-	MOV EAX, 9
-	PUSH EAX
-	MOV EAX, [EBP-4]
-	POP EBX
-	XOR EDX, EDX
-	IDIV EBX
-	MOV EAX, EDX
-	PUSH EAX
-	POP EAX
-	MOV [EBP-12], EAX
-	; -- line 16 --
-	MOV EAX, [EBP-12]
-	CALL OUTDEC
 	; -- line 18 --
-	MOV EAX, [EBP-12]
-	PUSH EAX
-	MOV EAX, [EBP-8]
-	POP EBX
-	CMP EBX, EAX
-	JLE L_rel_true_0
-	MOV EAX, 0
-	JMP L_rel_end_1
-L_rel_true_0:
-	MOV EAX, 1
-L_rel_end_1:
-	PUSH EAX
-	POP EAX
-	MOV [EBP-16], EAX
-	; -- line 19 --
-	MOV EAX, [EBP-16]
-	CALL OUTDEC
-	; -- line 21 --
-	MOV EAX, [i]
-	PUSH EAX
-	MOV EAX, [j]
-	POP EBX
-	CMP EBX, EAX
-	JNE L_rel_true_2
-	MOV EAX, 0
-	JMP L_rel_end_3
-L_rel_true_2:
-	MOV EAX, 1
-L_rel_end_3:
-	PUSH EAX
-	POP EAX
-	MOV [EBP-20], EAX
-	; -- line 22 --
-	MOV EAX, [EBP-20]
-	CALL OUTDEC
-	; -- line 24 --
-	MOV EAX, [EBP-16]
-	CMP EAX, 0
-	JNE L_bool_true_4
-	MOV EAX, [EBP-20]
-	CMP EAX, 0
-	JNE L_bool_true_4
-L_bool_false_5:
-	MOV EAX, 0
-	JMP L_bool_end_6
-L_bool_true_4:
-	MOV EAX, 1
-L_bool_end_6:
-	PUSH EAX
-	POP EAX
-	MOV [EBP-24], EAX
-	; -- line 25 --
-	MOV EAX, [EBP-24]
-	CALL OUTDEC
-	; -- line 27 --
-	MOV EAX, [EBP-16]
-	CMP EAX, 0
-	JE L_bool_false_8
-	MOV EAX, [EBP-20]
-	CMP EAX, 0
-	JE L_bool_false_8
-L_bool_true_7:
-	MOV EAX, 1
-	JMP L_bool_end_9
-L_bool_false_8:
-	MOV EAX, 0
-L_bool_end_9:
-	PUSH EAX
-	POP EAX
-	MOV [EBP-24], EAX
-	; -- line 28 --
-	MOV EAX, [EBP-24]
-	CALL OUTDEC
-	MOV EAX, [EBP-24]
-	INC dword [EBP-24]
-	; -- line 31 --
-	MOV EAX, [EBP-24]
-	CALL OUTDEC
-	; -- line 33 --
-	MOV EAX, [EBP-24]
-	NEG EAX
-	PUSH EAX
-	POP EAX
-	MOV [EBP-4], EAX
-	; -- line 34 --
 	MOV EAX, [EBP-4]
 	CALL OUTDEC
-	; -- line 36 --
+	; -- line 19 --
 	MOV EAX, 0
 	JMP main_exit
 main_exit:
