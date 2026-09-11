@@ -18,7 +18,7 @@ private:
     string optimizedFileName;
     SymbolTable* symbolTable;
 
-    int currentLocalOffset = -4;
+    int currentLocalOffset = 0;
     int currentParamOffset = 8;
     int labelCount = 0;
     bool isGlobalScope = true;
@@ -43,31 +43,24 @@ private:
         return "[EBP" + (sym->offset >= 0 ? "+" + to_string(sym->offset) : to_string(sym->offset)) + "]";
     }
 
-    // Computes the effective address of an array element access (arr[expr]).
-    // Leaves the byte offset in EBX (global) or the EBP displacement in ESI
-    // (local), and returns the memory operand string to use in a MOV/etc.
-    // Clobbers EAX (and EBX or ESI) — call this BEFORE you need EAX for
-    // anything else at the current step.
+
     string computeArrayAddress(CSubsetParser::VarArrayContext* ctx) {
         string varName = ctx->ID()->getText();
         SymbolInfo* sym = symbolTable->LookUp(varName);
 
-        visit(ctx->expression());     // index value -> EAX
-        emit("IMUL EAX, 4");          // EAX = index * 4 (byte offset)
+        visit(ctx->expression());     
+        emit("IMUL EAX, 4");          
 
         if (sym && sym->isGlobal) {
             emit("MOV EBX, EAX");
             return "[" + varName + " + EBX]";
         } else {
-            // local array: element address = EBP + (sym->offset - byteOffset)
             emit("MOV ESI, " + to_string(sym->offset));
             emit("SUB ESI, EAX");
             return "[EBP + ESI]";
         }
     }
 
-    // Dispatches on VarSimple vs VarArray and returns the memory operand
-    // string for that variable / array element.
     string resolveVariableAddress(CSubsetParser::VariableContext* vctx) {
         if (auto* v = static_cast<CSubsetParser::VarSimpleContext*>(vctx)) {
             SymbolInfo* sym = symbolTable->LookUp(v->ID()->getText());
@@ -88,16 +81,15 @@ private:
             asmFile << varName << " dd " << arraySize << " dup (0)\n";
         } else {
             si.isGlobal = false;
+            int size = 4 * arraySize;
+            currentLocalOffset -= size;
             si.offset = currentLocalOffset;
             symbolTable->Insert(si);
-
-            currentLocalOffset -= (4 * arraySize);
+            emit("SUB ESP, " + to_string(size));
         }
     }
 
-    // ---------------------------------------------------------------
     // Parameter list helpers
-    // ---------------------------------------------------------------
 
     int countParams(CSubsetParser::Parameter_listContext* ctx) {
         if (!ctx) return 0;
@@ -121,8 +113,7 @@ private:
         currentParamOffset += 4;
     }
 
-    // Registers parameters into the symbol table left-to-right so the
-    // first declared parameter ends up at EBP+8, the next at EBP+12, etc.
+
     void registerParams(CSubsetParser::Parameter_listContext* ctx) {
         if (!ctx) return;
         if (auto* c = static_cast<CSubsetParser::ParamListMultiNamedContext*>(ctx)) {
@@ -138,9 +129,7 @@ private:
         }
     }
 
-    // ---------------------------------------------------------------
     // Function call argument helpers (push right-to-left)
-    // ---------------------------------------------------------------
 
     void pushArgumentsRec(CSubsetParser::ArgumentsContext* ctx) {
         if (!ctx) return;
@@ -171,7 +160,7 @@ private:
                                CSubsetParser::Parameter_listContext* paramCtx,
                                CSubsetParser::Compound_statementContext* bodyCtx) {
         isGlobalScope = false;
-        currentLocalOffset = -4;
+        currentLocalOffset = 0;
         currentParamOffset = 8;
         currentFunctionExitLabel = funcName + "_exit";
 
@@ -180,7 +169,6 @@ private:
 
         emit("PUSH EBP");
         emit("MOV EBP, ESP");
-        emit("SUB ESP, 128");
 
         symbolTable->EnterScope();
 
@@ -197,7 +185,7 @@ private:
         symbolTable->ExitScope();
 
         emitLabel(currentFunctionExitLabel);
-        emit("ADD ESP, 128");
+        emit("MOV ESP, EBP");
         emit("POP EBP");
 
         if (funcName == "main") {
