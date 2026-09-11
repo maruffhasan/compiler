@@ -655,10 +655,6 @@ private:
                         continue;
                     }
                 }
-
-                if (!trimmed.empty() && trimmed.back() == ':' && !trimmedNext.empty() && trimmedNext.back() == ':') {
-                    continue;
-                }
             }
 
             optimized.push_back(cur);
