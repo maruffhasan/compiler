@@ -34,7 +34,7 @@ int main(int argc, const char* argv[]) {
     BuildCodeVisitor visitor("out/code.asm", "out/optCode.asm", lexLogFile);
     visitor.visit(tree);
 
-    cout << "Intermediate Code Generation (Sub-Phase 1A) Completed." << endl;
+    cout << "Intermediate Code Generation Completed." << endl;
 
     inputFile.close();
     return 0;
