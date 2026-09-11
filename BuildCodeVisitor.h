@@ -26,42 +26,42 @@ private:
     string currentFunctionExitLabel = "main_exit";
 
 
-    string newLabel(const string& prefix) {
+    string newLabel(const string& prefix) { // creating new unique label
         return prefix + "_" + to_string(labelCount++);
     }
 
-    void annotateLine(antlr4::ParserRuleContext* ctx) {
+    void annotateLine(antlr4::ParserRuleContext* ctx) { // printing line number
         if (ctx && ctx->getStart()) {
             size_t line = ctx->getStart()->getLine();
             emit("; -- line " + to_string(line) + " --");
         }
     }
 
-    string addrOf(SymbolInfo* sym) {
+    string addrOf(SymbolInfo* sym) { // returns address of variable  
         if (!sym) return "";
         if (sym->isGlobal) return "[" + sym->name + "]";
         return "[EBP" + (sym->offset >= 0 ? "+" + to_string(sym->offset) : to_string(sym->offset)) + "]";
     }
 
 
-    string computeArrayAddress(CSubsetParser::VarArrayContext* ctx) {
+    string computeArrayAddress(CSubsetParser::VarArrayContext* ctx) {  // address of array element
         string varName = ctx->ID()->getText();
         SymbolInfo* sym = symbolTable->LookUp(varName);
 
         visit(ctx->expression());     
         emit("IMUL EAX, 4");          
 
-        if (sym && sym->isGlobal) {
+        if (sym && sym->isGlobal) {   // [arr + EBX]
             emit("MOV EBX, EAX");
             return "[" + varName + " + EBX]";
         } else {
-            emit("MOV ESI, " + to_string(sym->offset));
+            emit("MOV ESI, " + to_string(sym->offset));  // [EBP - base_offset - index * 4] 
             emit("SUB ESI, EAX");
             return "[EBP + ESI]";
         }
     }
 
-    string resolveVariableAddress(CSubsetParser::VariableContext* vctx) {
+    string resolveVariableAddress(CSubsetParser::VariableContext* vctx) {  // compute address of variable and array
         if (auto* v = static_cast<CSubsetParser::VarSimpleContext*>(vctx)) {
             SymbolInfo* sym = symbolTable->LookUp(v->ID()->getText());
             return addrOf(sym);
@@ -91,7 +91,7 @@ private:
 
     // Parameter list helpers
 
-    int countParams(CSubsetParser::Parameter_listContext* ctx) {
+    int countParams(CSubsetParser::Parameter_listContext* ctx) { // count number of parameters (need for function return : RET N)
         if (!ctx) return 0;
         if (auto* c = static_cast<CSubsetParser::ParamListMultiNamedContext*>(ctx)) {
             return 1 + countParams(c->parameter_list());
@@ -105,7 +105,7 @@ private:
         return 0;
     }
 
-    void addParamSymbol(const string& name) {
+    void addParamSymbol(const string& name) {  // add parameter to symbol table 
         SymbolInfo si(name, "VAR", "INT");
         si.isGlobal = false;
         si.offset = currentParamOffset;
@@ -114,7 +114,7 @@ private:
     }
 
 
-    void registerParams(CSubsetParser::Parameter_listContext* ctx) {
+    void registerParams(CSubsetParser::Parameter_listContext* ctx) { // add parameter to function's scope in symbol table 
         if (!ctx) return;
         if (auto* c = static_cast<CSubsetParser::ParamListMultiNamedContext*>(ctx)) {
             registerParams(c->parameter_list());
@@ -129,14 +129,11 @@ private:
         }
     }
 
-    // Function call argument helpers (push right-to-left)
+    // Function call argument helpers 
 
     void pushArgumentsRec(CSubsetParser::ArgumentsContext* ctx) {
         if (!ctx) return;
-        if (auto* c = static_cast<CSubsetParser::ArgumentsMultiContext*>(ctx)) {
-            // Evaluate/push the rightmost argument at this level first,
-            // then recurse into the remaining left part, so the FIRST
-            // (leftmost) argument ends up pushed LAST -> closest to EBP+8.
+        if (auto* c = static_cast<CSubsetParser::ArgumentsMultiContext*>(ctx)) { // push right to left
             visit(c->logic_expression());
             emit("PUSH EAX");
             pushArgumentsRec(c->arguments());
@@ -151,7 +148,6 @@ private:
         if (auto* c = static_cast<CSubsetParser::ArgListNonEmptyContext*>(ctx)) {
             pushArgumentsRec(c->arguments());
         }
-        // ArgListEmptyContext: nothing to push
     }
 
     // Function definition 
@@ -270,7 +266,7 @@ public:
 
     // Statements
 
-    virtual any visitStmtPrintln(CSubsetParser::StmtPrintlnContext *ctx) override {
+    virtual any visitStmtPrintln(CSubsetParser::StmtPrintlnContext *ctx) override { // printing identifier 
         annotateLine(ctx);
         string varName = ctx->ID()->getText();
         SymbolInfo* sym = symbolTable->LookUp(varName);
@@ -280,7 +276,7 @@ public:
         return 0;
     }
 
-    virtual any visitStmtReturn(CSubsetParser::StmtReturnContext *ctx) override {
+    virtual any visitStmtReturn(CSubsetParser::StmtReturnContext *ctx) override { // return statement
         annotateLine(ctx);
         visit(ctx->expression());
 
@@ -288,7 +284,7 @@ public:
         return 0;
     }
 
-    virtual any visitStmtIf(CSubsetParser::StmtIfContext *ctx) override {
+    virtual any visitStmtIf(CSubsetParser::StmtIfContext *ctx) override { // if condition without else block 
         annotateLine(ctx);
         visit(ctx->expression());
         string endLabel = newLabel("L_if_end");
@@ -299,7 +295,7 @@ public:
         return 0;
     }
 
-    virtual any visitStmtIfElse(CSubsetParser::StmtIfElseContext *ctx) override {
+    virtual any visitStmtIfElse(CSubsetParser::StmtIfElseContext *ctx) override { // if else condition
         annotateLine(ctx);
         visit(ctx->expression());
         string elseLabel = newLabel("L_else");
@@ -314,7 +310,7 @@ public:
         return 0;
     }
 
-    virtual any visitStmtWhile(CSubsetParser::StmtWhileContext *ctx) override {
+    virtual any visitStmtWhile(CSubsetParser::StmtWhileContext *ctx) override {  // while loop
         annotateLine(ctx);
         string startLabel = newLabel("L_while_start");
         string endLabel = newLabel("L_while_end");
@@ -328,7 +324,7 @@ public:
         return 0;
     }
 
-    virtual any visitStmtFor(CSubsetParser::StmtForContext *ctx) override {
+    virtual any visitStmtFor(CSubsetParser::StmtForContext *ctx) override { // for loop
         annotateLine(ctx);
         visit(ctx->expression_statement(0)); // init
 
@@ -348,14 +344,14 @@ public:
         return 0;
     }
 
-    virtual any visitExprStmtEmpty(CSubsetParser::ExprStmtEmptyContext *ctx) override {
+    virtual any visitExprStmtEmpty(CSubsetParser::ExprStmtEmptyContext *ctx) override { // explicitly for "for loop"
         emit("MOV EAX, 1"); // An empty for condition means "always true"
         return 0;
     }
 
     // Expressions & Assignments
 
-    virtual any visitExprAssign(CSubsetParser::ExprAssignContext *ctx) override {
+    virtual any visitExprAssign(CSubsetParser::ExprAssignContext *ctx) override {  // assignment : x = y * 4
         annotateLine(ctx);
         visit(ctx->logic_expression());
         emit("PUSH EAX");
@@ -367,7 +363,7 @@ public:
         return 0;
     }
 
-    virtual any visitLogicOp(CSubsetParser::LogicOpContext *ctx) override {
+    virtual any visitLogicOp(CSubsetParser::LogicOpContext *ctx) override {  // logical operators : x || y
         string op = ctx->LOGICOP()->getText();
         string trueLabel = newLabel("L_bool_true");
         string falseLabel = newLabel("L_bool_false");
@@ -409,7 +405,7 @@ public:
         return 0;
     }
 
-    virtual any visitRelOp(CSubsetParser::RelOpContext *ctx) override {
+    virtual any visitRelOp(CSubsetParser::RelOpContext *ctx) override {  // relational operator : x >= y
         visit(ctx->simple_expression(0));
         emit("PUSH EAX");
         visit(ctx->simple_expression(1));
@@ -435,7 +431,7 @@ public:
         return 0;
     }
 
-    virtual any visitSimpleAddOp(CSubsetParser::SimpleAddOpContext *ctx) override {
+    virtual any visitSimpleAddOp(CSubsetParser::SimpleAddOpContext *ctx) override {  // x +- y
         visit(ctx->term());
         emit("PUSH EAX");
         visit(ctx->simple_expression());
@@ -450,7 +446,7 @@ public:
         return 0;
     }
 
-    virtual any visitTermMulOp(CSubsetParser::TermMulOpContext *ctx) override {
+    virtual any visitTermMulOp(CSubsetParser::TermMulOpContext *ctx) override {  // x */% y
         visit(ctx->unary_expression());
         emit("PUSH EAX");
         visit(ctx->term());
@@ -472,7 +468,7 @@ public:
 
     // Unary Expressions
 
-    virtual any visitUnaryAddOp(CSubsetParser::UnaryAddOpContext *ctx) override {
+    virtual any visitUnaryAddOp(CSubsetParser::UnaryAddOpContext *ctx) override { // +-x
         visit(ctx->unary_expression());
         string op = ctx->ADDOP()->getText();
         if (op == "-") {
@@ -481,7 +477,7 @@ public:
         return 0;
     }
 
-    virtual any visitUnaryNot(CSubsetParser::UnaryNotContext *ctx) override {
+    virtual any visitUnaryNot(CSubsetParser::UnaryNotContext *ctx) override { // !x
         visit(ctx->unary_expression());
         emit("CMP EAX, 0");
         emit("SETE AL");
@@ -491,31 +487,31 @@ public:
 
     // Factors
 
-    virtual any visitFactorConstInt(CSubsetParser::FactorConstIntContext *ctx) override {
+    virtual any visitFactorConstInt(CSubsetParser::FactorConstIntContext *ctx) override {  // integer
         emit("MOV EAX, " + ctx->CONST_INT()->getText());
         return 0;
     }
 
-    virtual any visitFactorVar(CSubsetParser::FactorVarContext *ctx) override {
+    virtual any visitFactorVar(CSubsetParser::FactorVarContext *ctx) override { // variable
         string addr = resolveVariableAddress(ctx->variable());
         emit("MOV EAX, " + addr);
         return 0;
     }
 
-    virtual any visitFactorFuncCall(CSubsetParser::FactorFuncCallContext *ctx) override {
+    virtual any visitFactorFuncCall(CSubsetParser::FactorFuncCallContext *ctx) override {  // function call
         pushArguments(ctx->argument_list());
         emit("CALL " + ctx->ID()->getText());  // callee-cleanup convention, return value is in EAX
         return 0;
     }
 
-    virtual any visitFactorIncop(CSubsetParser::FactorIncopContext *ctx) override {
+    virtual any visitFactorIncop(CSubsetParser::FactorIncopContext *ctx) override { // post increment : x++
         string addr = resolveVariableAddress(ctx->variable());
         emit("MOV EAX, " + addr);
         emit("INC dword " + addr);
         return 0;
     }
 
-    virtual any visitFactorDecop(CSubsetParser::FactorDecopContext *ctx) override {
+    virtual any visitFactorDecop(CSubsetParser::FactorDecopContext *ctx) override { // post decrement : x--
         string addr = resolveVariableAddress(ctx->variable());
         emit("MOV EAX, " + addr);
         emit("DEC dword " + addr);
@@ -582,9 +578,7 @@ private:
                 << "\tRET\n";
     }
 
-    // -----------------------------------------------------------
     // Peephole Optimizer Implementation
-    // -----------------------------------------------------------
 
     void performOptimization() {
         ifstream inFile(unoptimizedFileName);
